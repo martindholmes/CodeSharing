@@ -39,10 +39,6 @@ declare option exist:serialize "method=xml media-type=application/xml encoding=u
   problems can occur when the form re-submits to itself. :)
 declare variable $url := tokenize(request:get-uri(), '/')[position() = last()];
 
-(: The user's preferred number of returns, which is overridden by the above absolute limit. :)
-declare variable $userMaxItemsPerPage := xs:integer(request:get-parameter('maxItemsPerPage', $cs:defaultMaxItemsPerPage));
-declare variable $maxItemsPerPage := min(($userMaxItemsPerPage, $cs:absoluteMaxItemsPerPage));
-
 (: The from variable holds the number to start from when paging through results. :)
 declare variable $from := xs:integer(request:get-parameter('from', '1'));
 
@@ -57,6 +53,11 @@ declare variable $namespace := if ($verb != 'listNamespaces') then request:get-p
 declare variable $elementName := if ($verb = 'getExamples') then request:get-parameter('elementName', '') else '';
 declare variable $attributeName := if ($verb = 'getExamples') then request:get-parameter('attributeName', '') else '';
 declare variable $attributeValue := if ($verb = 'getExamples') then request:get-parameter('attributeValue', '') else '';
+
+(: The user's preferred number of returns, which is overridden by the above absolute limit.
+   We also impose absolute limits on specific elements that can be excessively large. :)
+declare variable $userMaxItemsPerPage := xs:integer(request:get-parameter('maxItemsPerPage', $cs:defaultMaxItemsPerPage));
+declare variable $maxItemsPerPage := if ($elementName = $cs:largeElements) then 1 else min(($userMaxItemsPerPage, $cs:absoluteMaxItemsPerPage));
 
 (:The documentType filters the results according to a specific document type.:)
 declare variable $documentType := if ($verb = 'getExamples') then normalize-space(request:get-parameter('documentType', '')) else '';
@@ -190,10 +191,10 @@ declare function local:getEgs() as element()*{
    as well as results which are strictly speaking correct. :)
             if (string-length($attributeValue) gt 0) then
 (: An attribute value is specified. :)
-            (collection($cs:rootCol)//tei:TEI[(string-length($documentType) = 0) or matches(descendant::tei:catRef/@target, $documentType)]//*[namespace-uri() = $namespace][@*[local-name() = $attributeName and .= $attributeValue and namespace-uri() = ""]], collection($cs:rootCol)//tei:TEI[(string-length($documentType) = 0) or matches(descendant::tei:catRef/@target, $documentType)]//*[@*[local-name() = $attributeName and .= $attributeValue][namespace-uri() = $namespace]])
+            (collection($cs:rootCol)//tei:TEI[(string-length($documentType) = 0) or matches(descendant::tei:catRef/@target, $documentType)]//*[namespace-uri() = $namespace][@*[local-name() = $attributeName and .= $attributeValue and namespace-uri() = ""]], collection($cs:rootCol)//tei:TEI[(string-length($documentType) = 0) or matches(descendant::tei:catRef/@target, $documentType)]//descendant-or-self::*[@*[local-name() = $attributeName and .= $attributeValue][namespace-uri() = $namespace]])
             else
 (: An attribute value is not specified. :)
-            (collection($cs:rootCol)//tei:TEI[(string-length($documentType) = 0) or matches(descendant::tei:catRef/@target, $documentType)]//*[namespace-uri() = $namespace][@*[local-name() = $attributeName and namespace-uri() = ""]], collection($cs:rootCol)//tei:TEI[(string-length($documentType) = 0) or matches(descendant::tei:catRef/@target, $documentType)]//*[@*[local-name() = $attributeName][namespace-uri() = $namespace]])
+            (collection($cs:rootCol)//tei:TEI[(string-length($documentType) = 0) or matches(descendant::tei:catRef/@target, $documentType)]//*[namespace-uri() = $namespace][@*[local-name() = $attributeName and namespace-uri() = ""]], collection($cs:rootCol)//tei:TEI[(string-length($documentType) = 0) or matches(descendant::tei:catRef/@target, $documentType)]//descendant-or-self::*[@*[local-name() = $attributeName][namespace-uri() = $namespace]])
           else
             if (string-length($attributeValue) gt 0) then 
 (: An attribute value and nothing else has been specified. :)

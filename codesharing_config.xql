@@ -34,6 +34,12 @@ declare variable $cs:absoluteMaxItemsPerPage := 100;
    of results. :)
 declare variable $cs:defaultMaxItemsPerPage := 10;
 
+(: This is a list of elements that should only be returned one at a time because 
+  they're typically very large. Modify at will, depending on your documents and 
+  server capacity. Root TEI elements are not returned by default; your site should 
+  already provide access to TEI documents in XML format. :)
+declare variable $cs:largeElements := ('teiHeader', 'text', 'front', 'back', 'body');
+
 (: Set this variable to a string which identifies your project. :)
 declare variable $cs:projectName := 'The Map of Early Modern London';
 
