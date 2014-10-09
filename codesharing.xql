@@ -187,12 +187,10 @@ declare function local:getEgs() as element()*{
 (: Attributes in the context of an element.   :)
       if (string-length($attributeValue) gt 0) then
 (: An attribute value is specified. :)
-        (:collection($cs:rootCol)//tei:TEI[(not($documentType)) or matches(descendant::tei:catRef/@target, $documentType)]//*[namespace-uri() = $namespace][local-name() = $elementName][@*[local-name() = $attributeName] = $attributeValue]:)
         let $q := concat("collection('", $cs:rootCol, "')//tei:TEI", $doctypePredicate, "//", $elementName, "[namespace-uri() = '", $namespace, "'][@", $attributeName, "='", $attributeValue, "']")
         return util:eval($q)
       else
 (: An attribute value is not specified. :)
-        (:collection($cs:rootCol)//tei:TEI[(not($documentType)) or matches(descendant::tei:catRef/@target, $documentType)]//*[namespace-uri() = $namespace][local-name() = $elementName][@*[local-name() = $attributeName]]:)
         let $q := concat("collection('", $cs:rootCol, "')//tei:TEI", $doctypePredicate, "//", $elementName, "[namespace-uri() = '", $namespace, "'][@", $attributeName, "]")
         return util:eval($q)
       else
@@ -200,12 +198,10 @@ declare function local:getEgs() as element()*{
 (: Element is named but not attribute, although a value may still be supplied for attribute.       :)
           if (string-length($attributeValue) gt 0) then
 (: There's an attribute value but no name for it.        :)
-            (:collection($cs:rootCol)//tei:TEI[(not($documentType)) or matches(descendant::tei:catRef/@target, $documentType)]//*[namespace-uri() = $namespace][local-name() = $elementName][@* = $attributeValue]:)
             let $q := concat("collection('", $cs:rootCol, "')//tei:TEI", $doctypePredicate, "//", $elementName, "[namespace-uri() = '", $namespace, "'][@*='", $attributeValue, "']")
             return util:eval($q)
           else
 (: There's just an element name. Easy one. :)
-            (:collection($cs:rootCol)//tei:TEI[(not($documentType)) or matches(descendant::tei:catRef/@target, $documentType)]//*[namespace-uri() = $namespace][local-name() = $elementName]:)
             let $q := concat("collection('", $cs:rootCol, "')//tei:TEI", $doctypePredicate, "//", $elementName, "[namespace-uri() = '", $namespace, "']")
             return util:eval($q)
         else 
@@ -216,18 +212,15 @@ declare function local:getEgs() as element()*{
    as well as results which are strictly speaking correct. :)
             if (string-length($attributeValue) gt 0) then
 (: An attribute value is specified. :)
-            (:(collection($cs:rootCol)//tei:TEI[(not($documentType)) or matches(descendant::tei:catRef/@target, $documentType)]//*[namespace-uri() = $namespace][@*[local-name() = $attributeName and .= $attributeValue and namespace-uri() = ""]], collection($cs:rootCol)//tei:TEI[(string-length($documentType) = 0) or matches(descendant::tei:catRef/@target, $documentType)]//descendant-or-self::*[@*[local-name() = $attributeName and .= $attributeValue][namespace-uri() = $namespace]]):)
               let $q := concat("collection('", $cs:rootCol, "')//tei:TEI", $doctypePredicate, "//*[@", $attributeName, "[.='", $attributeValue, "' and (namespace-uri() = '' or namespace-uri() = '", $namespace, "')]]")
               return util:eval($q)
             else
 (: An attribute value is not specified. :)
-            (:(collection($cs:rootCol)//tei:TEI[(not($documentType)) or matches(descendant::tei:catRef/@target, $documentType)]//*[namespace-uri() = $namespace][@*[local-name() = $attributeName and namespace-uri() = ""]], collection($cs:rootCol)//tei:TEI[(string-length($documentType) = 0) or matches(descendant::tei:catRef/@target, $documentType)]//descendant-or-self::*[@*[local-name() = $attributeName][namespace-uri() = $namespace]]):)
             let $q := concat("collection('", $cs:rootCol, "')//tei:TEI", $doctypePredicate, "//*[@", $attributeName, "[namespace-uri() = '' or namespace-uri() = '", $namespace, "']]")
               return util:eval($q)
           else
             if (string-length($attributeValue) gt 0) then 
 (: An attribute value and nothing else has been specified. :)
-                (:(collection($cs:rootCol)//tei:TEI[(not($documentType)) or matches(descendant::tei:catRef/@target, $documentType)]//*[namespace-uri() = $namespace][@*  [namespace-uri() = ""] = $attributeValue], collection($cs:rootCol)//*[@* [namespace-uri() = $namespace] = $attributeValue]):)
                 let $q := concat("collection('", $cs:rootCol, "')//tei:TEI", $doctypePredicate, "//*[@*[.='", $attributeValue, "' and (namespace-uri() = '' or namespace-uri() = '", $namespace, "')]]")
               return util:eval($q)
             else
