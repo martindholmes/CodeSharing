@@ -28,16 +28,26 @@ import module namespace xmldb="http://exist-db.org/xquery/xmldb";
 import module namespace cs ="http://hcmc.uvic.ca/namespaces/exist/codesharing" at "codesharing_config.xql";
 
 (: This should be set to application/tei+xml, but that makes Firefox open a fresh tab, which is annoying. :)
-declare option exist:serialize "method=xml media-type=application/xml encoding=utf-8 indent=yes";
+declare option exist:serialize "method=xml media-type=application/xml encoding=utf-8 indent=yes expand-xincludes=no";
+
+(: For debugging only; optimizer should be on. :)
+(:declare option exist:optimize "enable=no";:)
 
 (: ------------------------------------------------------------------------------:)
 (: OTHER VARIABLES RETRIEVED OR CALCULATED FROM INPUT PARAMETERS.                :)
 (: ------------------------------------------------------------------------------:)
 
+(: Are we producing XML or HTML? :)
+declare variable $inputOutputType := request:get-parameter('outputType', 'xml');
+declare variable $outputType := if (matches($inputOutputType, '^((xml)|(html))$')) then $inputOutputType else 'xml';
+
 (: The URL we came in on, without the query string. :)
 (: Note: we make this a relative URL, otherwise various 
   problems can occur when the form re-submits to itself. :)
 declare variable $url := tokenize(request:get-uri(), '/')[position() = last()];
+
+(: We need to sanitize inputs as well as we can. We can do this 
+   by regexes and attempted casts to XML Schema datatypes. :)
 
 (: The from variable holds the number to start from when paging through results. :)
 declare variable $from := xs:integer(request:get-parameter('from', '1'));
@@ -47,12 +57,17 @@ declare variable $from := xs:integer(request:get-parameter('from', '1'));
 declare variable $verb := request:get-parameter('verb', 'identify');
 
 (: The user may be interested only in specific namespaces. We default to TEI, naturally. :)
-declare variable $namespace := if ($verb != 'listNamespaces') then request:get-parameter('namespace', 'http://www.tei-c.org/ns/1.0') else '';
-
+declare variable $inputNamespace := if ($verb != 'listNamespaces') then request:get-parameter('namespace', 'http://www.tei-c.org/ns/1.0') else '';
+declare variable $namespace := if ($inputNamespace castable as xs:anyURI and matches($inputNamespace, '^[a-zA-Z]+://')) then $inputNamespace else '';
 (: If the verb is getExamples, then we need to know the element and/or attribute name and value. :)
-declare variable $elementName := if ($verb = 'getExamples') then request:get-parameter('elementName', '') else '';
-declare variable $attributeName := if ($verb = 'getExamples') then request:get-parameter('attributeName', '') else '';
-declare variable $attributeValue := if ($verb = 'getExamples') then request:get-parameter('attributeValue', '') else '';
+declare variable $inputElementName := if ($verb = 'getExamples') then request:get-parameter('elementName', '') else '';
+declare variable $elementName := if ($inputElementName castable as xs:NCName) then $inputElementName else '';
+declare variable $inputAttributeName := if ($verb = 'getExamples') then request:get-parameter('attributeName', '') else '';
+declare variable $attributeName := if ($inputAttributeName castable as xs:NCName) then $inputAttributeName else '';
+(: This is a bit harder to sanitize; we'll assume, though, that 
+   in order to break out of the string value, a quote or entity 
+   will need to be injected, so we will escape them all. :)
+declare variable $attributeValue := if ($verb = 'getExamples') then local:sanitizeString(request:get-parameter('attributeValue', '')) else '';
 
 (: The user's preferred number of returns, which is overridden by the above absolute limit.
    We also impose absolute limits on specific elements that can be excessively large. :)
@@ -60,7 +75,7 @@ declare variable $userMaxItemsPerPage := xs:integer(request:get-parameter('maxIt
 declare variable $maxItemsPerPage := if ($elementName = $cs:largeElements) then 1 else min(($userMaxItemsPerPage, $cs:absoluteMaxItemsPerPage));
 
 (:The documentType filters the results according to a specific document type.:)
-declare variable $documentType := if ($verb = 'getExamples') then normalize-space(request:get-parameter('documentType', '')) else '';
+declare variable $documentType := if ($verb = 'getExamples') then local:sanitizeString(normalize-space(request:get-parameter('documentType', ''))) else '';
 
 (:The wrapped setting determines whether the hits will be returned in the context of their parent element. :)
 declare variable $wrapped := if (request:get-parameter('wrapped', 'false') = 'true') then true() else false();
@@ -166,39 +181,55 @@ declare function local:processVerb() as element()*{
 
 (: This function retrieves a set of nodes which match the input parameters. :)
 declare function local:getEgs() as element()*{
+      let $doctypePredicate := if ($documentType) then concat("[matches(descendant::tei:catRef/@target, '", $documentType, "')]") else ""
+      return
       if (string-length($elementName) gt 0 and string-length($attributeName) gt 0) then
 (: Attributes in the context of an element.   :)
       if (string-length($attributeValue) gt 0) then
 (: An attribute value is specified. :)
-        collection($cs:rootCol)//tei:TEI[(string-length($documentType) = 0) or matches(descendant::tei:catRef/@target, $documentType)]//*[namespace-uri() = $namespace][local-name() = $elementName][@*[local-name() = $attributeName] = $attributeValue]
+        (:collection($cs:rootCol)//tei:TEI[(not($documentType)) or matches(descendant::tei:catRef/@target, $documentType)]//*[namespace-uri() = $namespace][local-name() = $elementName][@*[local-name() = $attributeName] = $attributeValue]:)
+        let $q := concat("collection('", $cs:rootCol, "')//tei:TEI", $doctypePredicate, "//", $elementName, "[namespace-uri() = '", $namespace, "'][@", $attributeName, "='", $attributeValue, "']")
+        return util:eval($q)
       else
 (: An attribute value is not specified. :)
-        collection($cs:rootCol)//tei:TEI[(string-length($documentType) = 0) or matches(descendant::tei:catRef/@target, $documentType)]//*[namespace-uri() = $namespace][local-name() = $elementName][@*[local-name() = $attributeName]]
+        (:collection($cs:rootCol)//tei:TEI[(not($documentType)) or matches(descendant::tei:catRef/@target, $documentType)]//*[namespace-uri() = $namespace][local-name() = $elementName][@*[local-name() = $attributeName]]:)
+        let $q := concat("collection('", $cs:rootCol, "')//tei:TEI", $doctypePredicate, "//", $elementName, "[namespace-uri() = '", $namespace, "'][@", $attributeName, "]")
+        return util:eval($q)
       else
         if  (string-length($elementName) gt 0) then
 (: Element is named but not attribute, although a value may still be supplied for attribute.       :)
           if (string-length($attributeValue) gt 0) then
 (: There's an attribute value but no name for it.        :)
-            collection($cs:rootCol)//tei:TEI[(string-length($documentType) = 0) or matches(descendant::tei:catRef/@target, $documentType)]//*[namespace-uri() = $namespace][local-name() = $elementName][@* = $attributeValue]
+            (:collection($cs:rootCol)//tei:TEI[(not($documentType)) or matches(descendant::tei:catRef/@target, $documentType)]//*[namespace-uri() = $namespace][local-name() = $elementName][@* = $attributeValue]:)
+            let $q := concat("collection('", $cs:rootCol, "')//tei:TEI", $doctypePredicate, "//", $elementName, "[namespace-uri() = '", $namespace, "'][@*='", $attributeValue, "']")
+            return util:eval($q)
           else
 (: There's just an element name. Easy one. :)
-            collection($cs:rootCol)//tei:TEI[(string-length($documentType) = 0) or matches(descendant::tei:catRef/@target, $documentType)]//*[namespace-uri() = $namespace][local-name() = $elementName]
+            (:collection($cs:rootCol)//tei:TEI[(not($documentType)) or matches(descendant::tei:catRef/@target, $documentType)]//*[namespace-uri() = $namespace][local-name() = $elementName]:)
+            let $q := concat("collection('", $cs:rootCol, "')//tei:TEI", $doctypePredicate, "//", $elementName, "[namespace-uri() = '", $namespace, "']")
+            return util:eval($q)
         else 
           if (string-length($attributeName) gt 0) then
 (: Attributes irrespective of their parent element. :)
-(: In this case, we have to retrieve a sequence of two nodesets, one with no namespace
-   and one with the specified namespace. This is designed to produce intuitive results 
+(: In this case, we have to retrieve in no namespace as well as in the specified
+   namespace. This is designed to produce intuitive results 
    as well as results which are strictly speaking correct. :)
             if (string-length($attributeValue) gt 0) then
 (: An attribute value is specified. :)
-            (collection($cs:rootCol)//tei:TEI[(string-length($documentType) = 0) or matches(descendant::tei:catRef/@target, $documentType)]//*[namespace-uri() = $namespace][@*[local-name() = $attributeName and .= $attributeValue and namespace-uri() = ""]], collection($cs:rootCol)//tei:TEI[(string-length($documentType) = 0) or matches(descendant::tei:catRef/@target, $documentType)]//descendant-or-self::*[@*[local-name() = $attributeName and .= $attributeValue][namespace-uri() = $namespace]])
+            (:(collection($cs:rootCol)//tei:TEI[(not($documentType)) or matches(descendant::tei:catRef/@target, $documentType)]//*[namespace-uri() = $namespace][@*[local-name() = $attributeName and .= $attributeValue and namespace-uri() = ""]], collection($cs:rootCol)//tei:TEI[(string-length($documentType) = 0) or matches(descendant::tei:catRef/@target, $documentType)]//descendant-or-self::*[@*[local-name() = $attributeName and .= $attributeValue][namespace-uri() = $namespace]]):)
+              let $q := concat("collection('", $cs:rootCol, "')//tei:TEI", $doctypePredicate, "//*[@", $attributeName, "[.='", $attributeValue, "' and (namespace-uri() = '' or namespace-uri() = '", $namespace, "')]]")
+              return util:eval($q)
             else
 (: An attribute value is not specified. :)
-            (collection($cs:rootCol)//tei:TEI[(string-length($documentType) = 0) or matches(descendant::tei:catRef/@target, $documentType)]//*[namespace-uri() = $namespace][@*[local-name() = $attributeName and namespace-uri() = ""]], collection($cs:rootCol)//tei:TEI[(string-length($documentType) = 0) or matches(descendant::tei:catRef/@target, $documentType)]//descendant-or-self::*[@*[local-name() = $attributeName][namespace-uri() = $namespace]])
+            (:(collection($cs:rootCol)//tei:TEI[(not($documentType)) or matches(descendant::tei:catRef/@target, $documentType)]//*[namespace-uri() = $namespace][@*[local-name() = $attributeName and namespace-uri() = ""]], collection($cs:rootCol)//tei:TEI[(string-length($documentType) = 0) or matches(descendant::tei:catRef/@target, $documentType)]//descendant-or-self::*[@*[local-name() = $attributeName][namespace-uri() = $namespace]]):)
+            let $q := concat("collection('", $cs:rootCol, "')//tei:TEI", $doctypePredicate, "//*[@", $attributeName, "[namespace-uri() = '' or namespace-uri() = '", $namespace, "']]")
+              return util:eval($q)
           else
             if (string-length($attributeValue) gt 0) then 
 (: An attribute value and nothing else has been specified. :)
-                (collection($cs:rootCol)//tei:TEI[(string-length($documentType) = 0) or matches(descendant::tei:catRef/@target, $documentType)]//*[namespace-uri() = $namespace][@*  [namespace-uri() = ""] = $attributeValue], collection($cs:rootCol)//*[@* [namespace-uri() = $namespace] = $attributeValue])
+                (:(collection($cs:rootCol)//tei:TEI[(not($documentType)) or matches(descendant::tei:catRef/@target, $documentType)]//*[namespace-uri() = $namespace][@*  [namespace-uri() = ""] = $attributeValue], collection($cs:rootCol)//*[@* [namespace-uri() = $namespace] = $attributeValue]):)
+                let $q := concat("collection('", $cs:rootCol, "')//tei:TEI", $doctypePredicate, "//*[@*[.='", $attributeValue, "' and (namespace-uri() = '' or namespace-uri() = '", $namespace, "')]]")
+              return util:eval($q)
             else
             ()
 };
@@ -242,10 +273,19 @@ declare function local:toExampleNamespace($el as element()) as element()*{
   local:toExampleNamespace($child)}
 };
 
+(: This function is borrowed with thanks from Eric van der Vlist, 
+   http://www.balisage.net/Proceedings/vol7/print/Vlist02/BalisageVol7-Vlist02.html:)
+declare function local:sanitizeString($text as xs:string) as xs:string {
+  let $s := replace(replace($text, '&amp;', '&amp;amp;'), '''', '&amp;apos;')
+  return replace($s, '"', '&amp;quot;')
+};
+
+
 (: ------------------------------------------------------------------------------:)
 (: THE OUTPUT DOCUMENT, WHICH IS TEI XML.                                        :)
 (: ------------------------------------------------------------------------------:)
 
+let $doc := 
 <TEI xmlns="http://www.tei-c.org/ns/1.0" version="5.0">
     <teiHeader>
         <fileDesc>
@@ -329,3 +369,9 @@ declare function local:toExampleNamespace($el as element()) as element()*{
     </text>
 </TEI>
     
+return if ($outputType = 'xml') then 
+  $doc
+else 
+  let $opt := util:declare-option('exist:serialize', 'method=html5 media-type=text/html') 
+  return
+  transform:transform($doc, doc("/db/dev/codesharing/codesharing.xsl"), ())
