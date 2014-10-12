@@ -1,3 +1,11 @@
+xquery version "3.0";
+(: 
+Copyright Martin Holmes. 
+Dual-licensed under CC-by and BSD2 licences 
+$Date$
+$Id$
+:)
+
 (:
     This is an implementation of the TEI CodeSharing API. It provides access to code samples 
     from the project database, in the form of <egXML> elements in the TEI Examples namespace.
@@ -13,7 +21,7 @@
     This library is written for the eXist XML database version 2.0. To run it with another 
     XQuery processor, changes would obviously have to be made to the code.
 :)
-xquery version "3.0";
+
 declare default element namespace "http://www.tei-c.org/ns/1.0";
 declare namespace tei="http://www.tei-c.org/ns/1.0";
 declare namespace teix="http://www.tei-c.org/ns/Examples";
