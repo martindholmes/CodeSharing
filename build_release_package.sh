@@ -13,6 +13,8 @@ echo "Trunk revision is : $REVISION"
 echo ""
 echo "CodeSharing build from SVN revision $REVISION" >> tmp/README.txt
 echo "Packaged on $(date)." >> tmp/README.txt
+echo "" >> tmp/README.txt
+cat trunk/instructions.txt >> tmp/README.txt
 zip -rj tmp/codesharing.zip trunk/*
 zip -rj tmp/codesharing.zip tmp/README.txt
 cp tmp/codesharing.zip codesharing_rev_${REVISION}.zip
