@@ -6,6 +6,13 @@
 echo ""
 echo "*** Creating a release package for the sample implementation of CodeSharing. ***"
 echo ""
+CHANGES=`svn status trunk | grep [AMCDG]`
+if [ -n "$CHANGES" ]; then
+    echo "You have uncommitted changes in trunk."
+    echo "You should probably commit them before making a package."
+    echo "Press Control + C to exit this process and commit your changes."
+    read
+fi
 rm -rf tmp
 mkdir tmp
 REVISION=`svnversion -n trunk | sed -r 's/^[0-9]+://'`

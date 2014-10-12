@@ -130,6 +130,9 @@ $Id$
             </constraint>
           </constraintSpec>
           
+          <!--  Looks like I started thinking I should override @xml:id on <item> in 
+                a particular context here, but of course it's not practical with current 
+                ODD technology. -->
           <!--
           <attList>
             <attDef ident="xml:id" mode="change">
