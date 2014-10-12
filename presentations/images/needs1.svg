@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="406.90472"
+   height="649.99109"
+   id="svg6722"
+   version="1.1"
+   inkscape:version="0.48.3.1 r9886"
+   sodipodi:docname="needs1.svg"
+   inkscape:export-filename="/home/mholmes/WorkData/english/map_of_london/xml/db/site/codesharing/images/needs1.png"
+   inkscape:export-xdpi="90"
+   inkscape:export-ydpi="90">
+  <defs
+     id="defs6724">
+    <marker
+       inkscape:stockid="TriangleOutMf"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="TriangleOutMf"
+       style="overflow:visible">
+      <path
+         id="path5390"
+         d="m 5.77,0 -8.65,5 0,-10 8.65,5 z"
+         style="fill:#c4c4c4;fill-rule:evenodd;stroke:#c4c4c4;stroke-width:1pt"
+         transform="scale(0.4,0.4)"
+         inkscape:connector-curvature="0" />
+    </marker>
+    <marker
+       inkscape:stockid="TriangleOutMf"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="marker6693"
+       style="overflow:visible">
+      <path
+         id="path6695"
+         d="m 5.77,0 -8.65,5 0,-10 8.65,5 z"
+         style="fill:#c4c4c4;fill-rule:evenodd;stroke:#c4c4c4;stroke-width:1pt"
+         transform="scale(0.4,0.4)"
+         inkscape:connector-curvature="0" />
+    </marker>
+    <filter
+       color-interpolation-filters="sRGB"
+       id="filter6241"
+       inkscape:label="Drop Shadow">
+      <feFlood
+         id="feFlood6243"
+         flood-opacity="1"
+         flood-color="rgb(0,0,0)"
+         result="flood" />
+      <feComposite
+         id="feComposite6245"
+         in2="SourceGraphic"
+         in="flood"
+         operator="in"
+         result="composite1" />
+      <feGaussianBlur
+         id="feGaussianBlur6247"
+         stdDeviation="6"
+         result="blur" />
+      <feOffset
+         id="feOffset6249"
+         dx="6"
+         dy="6"
+         result="offset" />
+      <feComposite
+         id="feComposite6251"
+         in2="offset"
+         in="SourceGraphic"
+         operator="over"
+         result="composite2" />
+    </filter>
+    <filter
+       color-interpolation-filters="sRGB"
+       id="filter6229"
+       inkscape:label="Drop Shadow">
+      <feFlood
+         id="feFlood6231"
+         flood-opacity="1"
+         flood-color="rgb(0,0,0)"
+         result="flood" />
+      <feComposite
+         id="feComposite6233"
+         in2="SourceGraphic"
+         in="flood"
+         operator="in"
+         result="composite1" />
+      <feGaussianBlur
+         id="feGaussianBlur6235"
+         stdDeviation="6"
+         result="blur" />
+      <feOffset
+         id="feOffset6237"
+         dx="6"
+         dy="6"
+         result="offset" />
+      <feComposite
+         id="feComposite6239"
+         in2="offset"
+         in="SourceGraphic"
+         operator="over"
+         result="composite2" />
+    </filter>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.7"
+     inkscape:cx="203.44133"
+     inkscape:cy="324.95034"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     fit-margin-top="5"
+     fit-margin-left="5"
+     fit-margin-right="5"
+     fit-margin-bottom="5"
+     inkscape:window-width="892"
+     inkscape:window-height="657"
+     inkscape:window-x="3"
+     inkscape:window-y="114"
+     inkscape:window-maximized="0" />
+  <metadata
+     id="metadata6727">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-171.55867,-207.32141)">
+    <g
+       id="g3781"
+       transform="translate(46.359745,-50.004575)"
+       style="filter:url(#filter6229)">
+      <path
+         transform="matrix(1.2342756,0,0,1.1587829,-105.11944,-88.767719)"
+         d="m 417.99523,557.65905 -133.13335,-10e-6 -66.56667,-115.29686 66.56668,-115.29686 133.13335,1e-5 66.56666,115.29686 z"
+         inkscape:randomized="0"
+         inkscape:rounded="0"
+         inkscape:flatsided="true"
+         sodipodi:arg2="1.5707963"
+         sodipodi:arg1="1.0471976"
+         sodipodi:r2="115.29687"
+         sodipodi:r1="133.13335"
+         sodipodi:cy="442.36218"
+         sodipodi:cx="351.42856"
+         sodipodi:sides="6"
+         id="path3005"
+         style="fill:#c4c4ff;fill-opacity:1;stroke:#404080;stroke-width:1.70000005;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:3"
+         sodipodi:type="star" />
+      <text
+         sodipodi:linespacing="125%"
+         id="text3775"
+         y="413.74612"
+         x="329.33362"
+         style="font-size:40px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+         xml:space="preserve"><tspan
+           y="413.74612"
+           x="329.33362"
+           id="tspan3777"
+           sodipodi:role="line">Codesharing</tspan><tspan
+           id="tspan3779"
+           y="463.74612"
+           x="329.33362"
+           sodipodi:role="line">Service</tspan></text>
+    </g>
+    <g
+       id="g6097"
+       transform="translate(-238.57142,-270.00457)"
+       style="filter:url(#filter6241)">
+      <path
+         transform="matrix(1.2430939,0,0,0.81363687,-110.08684,456.7901)"
+         d="m 711.42859,694.80878 c 0,56.41194 -57.88318,102.14286 -129.28571,102.14286 -71.40252,0 -129.2857,-45.73092 -129.2857,-102.14286 0,-56.41195 57.88318,-102.14286 129.2857,-102.14286 71.40253,0 129.28571,45.73091 129.28571,102.14286 z"
+         sodipodi:ry="102.14286"
+         sodipodi:rx="129.28571"
+         sodipodi:cy="694.80878"
+         sodipodi:cx="582.14288"
+         id="path6079"
+         style="fill:#ffc4c4;fill-opacity:1;stroke:#804040;stroke-opacity:1"
+         sodipodi:type="arc" />
+      <text
+         sodipodi:linespacing="125%"
+         id="text6091"
+         y="1007.532"
+         x="612.20422"
+         style="font-size:21px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#ffc4c4;fill-opacity:1;stroke:#804040;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:3;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+         xml:space="preserve"><tspan
+           style="font-size:40px;fill:#000000;fill-opacity:1;stroke:none"
+           y="1007.532"
+           x="612.20422"
+           id="tspan6093"
+           sodipodi:role="line">XML</tspan><tspan
+           style="font-size:40px;fill:#000000;fill-opacity:1;stroke:none"
+           id="tspan6095"
+           y="1057.532"
+           x="612.20422"
+           sodipodi:role="line">Repository</tspan></text>
+    </g>
+    <g
+       id="g6181"
+       transform="translate(-164.9427,-270.00457)">
+      <path
+         sodipodi:nodetypes="cc"
+         inkscape:connector-curvature="0"
+         id="path3849-3-50"
+         d="m 505.59969,786.20694 10e-6,105.71426"
+         style="fill:none;stroke:#c4c4c4;stroke-width:15.69999981;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:url(#TriangleOutMf)" />
+      <path
+         sodipodi:nodetypes="cc"
+         inkscape:connector-curvature="0"
+         id="path3849-3-50-0"
+         d="m 574.28571,934.2318 10e-6,-105.7143"
+         style="fill:none;stroke:#c4c4c4;stroke-width:15.69999981;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:url(#TriangleOutMf)" />
+    </g>
+  </g>
+</svg>
