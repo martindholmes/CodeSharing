@@ -1,3 +1,11 @@
+xquery version "3.0";
+(: 
+Copyright Martin Holmes. 
+Dual-licensed under CC-by and BSD2 licences 
+$Date$
+$Id$
+:)
+
 (:
     This is a configuration file for an implementation of the TEI CodeSharing API. 
     
@@ -11,7 +19,6 @@
     Humanities Computing and Media Centre. It is available under the Mozilla Public Licence
     version 1.1.
 :)
-xquery version "3.0";
 
 module namespace cs="http://hcmc.uvic.ca/namespaces/exist/codesharing";
 
