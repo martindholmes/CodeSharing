@@ -77,16 +77,16 @@ declare variable $attributeName := if ($inputAttributeName castable as xs:NCName
    will need to be injected, so we will escape them all. :)
 declare variable $attributeValue := if ($verb = 'getExamples') then local:sanitizeString(request:get-parameter('attributeValue', '')) else '';
 
+(:The wrapped setting determines whether the hits will be returned in the context of their parent element. :)
+declare variable $wrapped := if (request:get-parameter('wrapped', 'false') = 'true') then true() else false();
+
 (: The user's preferred number of returns, which is overridden by the above absolute limit.
    We also impose absolute limits on specific elements that can be excessively large. :)
 declare variable $userMaxItemsPerPage := xs:integer(request:get-parameter('maxItemsPerPage', $cs:defaultMaxItemsPerPage));
-declare variable $maxItemsPerPage := if ($elementName = $cs:largeElements) then 1 else min(($userMaxItemsPerPage, $cs:absoluteMaxItemsPerPage));
+declare variable $maxItemsPerPage := cs:refineMaxItemsPerPage($userMaxItemsPerPage, $elementName, $wrapped);
 
 (:The documentType filters the results according to a specific document type.:)
 declare variable $documentType := if ($verb = 'getExamples') then local:sanitizeString(normalize-space(request:get-parameter('documentType', ''))) else '';
-
-(:The wrapped setting determines whether the hits will be returned in the context of their parent element. :)
-declare variable $wrapped := if (request:get-parameter('wrapped', 'false') = 'true') then true() else false();
 
 (: We'll retrieve the examples irrespective of what the verb is, so that they are 
 accessible globally for counting and navigation through the list. :)

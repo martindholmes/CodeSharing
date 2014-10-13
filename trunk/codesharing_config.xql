@@ -41,11 +41,13 @@ declare variable $cs:absoluteMaxItemsPerPage := 100;
    of results. :)
 declare variable $cs:defaultMaxItemsPerPage := 10;
 
-(: This is a list of elements that should only be returned one at a time because 
+(: This is a list of elements that should only be returned in smaller sets because 
   they're typically very large. Modify at will, depending on your documents and 
   server capacity. Root TEI elements are not returned by default; your site should 
   already provide access to TEI documents in XML format. :)
-declare variable $cs:largeElements := ('teiHeader', 'text', 'front', 'back', 'body');
+declare variable $cs:hugeElements    := ('teiHeader', 'text', 'front', 'back', 'body');
+declare variable $cs:largeElements   := ('div', 'facsimile', 'listPerson', 'listBibl');
+declare variable $cs:mediumElements   := ('p', 'ab');
 
 (: Set this variable to a string which identifies your project. :)
 declare variable $cs:projectName := 'The Map of Early Modern London';
@@ -63,3 +65,20 @@ declare variable $cs:identification := concat('TEI CodeSharing service, running 
 (: TEI has many ways to specify document types. This default implementation assumes that the 
    document types are enumerated in a tei:taxonomy element with a specific @xml:id. :)
 declare variable $cs:documentTypeTaxonomyId := 'molDocumentTypes';
+
+(: This function returns a more constrained value for the maximum items allowed in one result 
+   set, based on tag name and whether the tag is to be returned "wrapped" in its parent element 
+   or not. Customize this function to meet the needs of your project and server. :)
+declare function cs:refineMaxItemsPerPage($requestedMaxItems as xs:integer, 
+                                          $elementName as xs:string, 
+                                          $wrapped as xs:boolean) as xs:integer{
+        if ($elementName = $cs:hugeElements) then 1
+        else
+            if ($elementName = $cs:largeElements) then 
+                if ($wrapped = true()) then 1
+                    else 3
+            else
+                if ($elementName = $cs:mediumElements and $wrapped = true()) then 3
+                else
+                    $requestedMaxItems
+};

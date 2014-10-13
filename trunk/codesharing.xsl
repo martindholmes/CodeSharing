@@ -242,9 +242,22 @@
         <p>
           <label for="maxItemsPerPage">Results per page</label>
           <select id="maxItemsPerPage" name="maxItemsPerPage">
+            <xsl:variable name="currInstances" select="xs:integer(descendant::*[@xml:id='cs_maxItemsPerPage']/text())"/>
+            <option value="1">
+              <xsl:if test="$currInstances = 1">
+                <xsl:attribute name="selected">selected</xsl:attribute>
+              </xsl:if>
+              1 (limit for huge elements)
+            </option>
+            <option value="3">
+              <xsl:if test="$currInstances = 3">
+                <xsl:attribute name="selected">selected</xsl:attribute>
+              </xsl:if>
+              3 (limit for large elements)
+            </option>
             <xsl:variable name="lowInstances" select="xs:integer(descendant::*[@xml:id='cs_defaultMaxItemsPerPage']/text())"/>
             <xsl:variable name="highInstances" select="xs:integer(descendant::*[@xml:id='cs_absoluteMaxItemsPerPage']/text())"/>
-            <xsl:variable name="currInstances" select="xs:integer(descendant::*[@xml:id='cs_maxItemsPerPage']/text())"/>
+            
             <xsl:for-each select="$lowInstances to $highInstances">
               <xsl:if test=". mod 10 = 0">
                 <option value="{.}">
