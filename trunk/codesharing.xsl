@@ -100,8 +100,18 @@
               background-color: #ffffff;
            }
            
+           div.results>div{
+              border-width: 0;
+           }
+           
            div p{
              margin: 0.5em;
+           }
+           
+           div.back{
+              font-size: 75%;
+              text-align: center;
+              border-width: 0;
            }
            
            button, input, select{
@@ -293,8 +303,6 @@
     <xsl:apply-templates/>
     <xsl:copy-of select="$navButtons"/>
     </div>
-    
-    <p style="text-align: center; font-size: 75%;">Example implementation of a CodeSharing service interface by Martin Holmes, 2013.</p>
   </xsl:template>
   
   <xsl:template match="list">
@@ -310,7 +318,15 @@
   <xsl:template match="ptr">
     <a href="{@target}"><xsl:value-of select="@target"/></a>
   </xsl:template>
+
+  <xsl:template match="div">
+    <div><xsl:apply-templates/></div>
+  </xsl:template>
   
+  <xsl:template match="back/div">
+    <div class="back"><xsl:apply-templates/></div>
+  </xsl:template>
+
   <xsl:template match="p">
     <p><xsl:apply-templates/></p>
   </xsl:template>

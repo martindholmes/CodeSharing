@@ -60,7 +60,7 @@ declare variable $cs:protocolDescUrl := 'codesharing_protocol.xhtml';
 declare variable $cs:noResultsFound := 'No results found.';
 
 (: Set this string to a useful explanation of the site and the API itself. :)
-declare variable $cs:identification := concat('TEI CodeSharing service, running on ', $cs:projectName, '.');
+declare variable $cs:identification := concat('TEI CodeSharing service by Martin Holmes, running on ', $cs:projectName, '.');
 
 (: TEI has many ways to specify document types. This default implementation assumes that the 
    document types are enumerated in a tei:taxonomy element with a specific @xml:id. :)
