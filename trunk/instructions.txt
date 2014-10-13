@@ -35,7 +35,7 @@ Requirements: eXist 2.1 or above.
    (: TEI CodeSharing API functions. We handle HTML first.  :)
 else if (text:matches-regex($exist:path, '/codesharing\.htm')) then
     <dispatch xmlns="http://exist.sourceforge.net/NS/exist">
-    	<forward url="codesharing/codesharing.xql">
+    	<forward url="{$exist:controller}/codesharing/codesharing.xql">
     	  <add-parameter name="outputType" value="html"/>
     	</forward>
     </dispatch>
@@ -43,7 +43,7 @@ else if (text:matches-regex($exist:path, '/codesharing\.htm')) then
     (: Now we can provide a special case for the HTML protocol description file. :)
     else if (text:matches-regex($exist:path, '/codesharing_protocol\.xhtml')) then
     <dispatch xmlns="http://exist.sourceforge.net/NS/exist">
-    	<forward url="codesharing/codesharing_protocol.xhtml">
+    	<forward url="{$exist:controller}/codesharing/codesharing_protocol.xhtml">
     	</forward>
     </dispatch>
     
@@ -51,7 +51,7 @@ else if (text:matches-regex($exist:path, '/codesharing\.htm')) then
   '/codesharing.xml', '/codesharing.xql' or even '/codesharing' will work. :)
 else if (text:matches-regex($exist:path, '/codesharing')) then
     <dispatch xmlns="http://exist.sourceforge.net/NS/exist">
-    	<forward url="codesharing/codesharing.xql">
+    	<forward url="{$exist:controller}/codesharing/codesharing.xql">
     	</forward>
     </dispatch>
     
