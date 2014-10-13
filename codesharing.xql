@@ -184,7 +184,7 @@ declare function local:processVerb() as element()*{
   retrieved. :)
    case 'getExamples' return 
     local:renderCodeSamples($egs)
-   default return (<p>{$cs:identification}</p>, <p><ref target="{$cs:protocolDescUrl}">More information</ref></p>)
+   default return ()
 };
 
 (: This function retrieves a set of nodes which match the input parameters. :)
@@ -365,8 +365,15 @@ let $doc :=
     -->
     
       {local:processVerb()}
-      
     </body>
+    
+    <back>
+      <div>
+        <p>{$cs:identification}</p>
+        <p><ref target="{$cs:protocolDescUrl}">More information</ref></p>
+      </div>
+    </back>
+    
     </text>
 </TEI>
     
