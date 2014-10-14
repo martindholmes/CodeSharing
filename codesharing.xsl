@@ -57,20 +57,14 @@
           <xsl:comment>
             
             /* Main style settings. */
+           html{
+              height: 100%;
+           }
            body{
-              background-image: linear-gradient(top, rgb(200,200,200) 1%, rgb(255,255,255) 69%);
-              background-image: -o-linear-gradient(top, rgb(200,200,200) 1%, rgb(255,255,255) 69%);
-              background-image: -moz-linear-gradient(top, rgb(200,200,200) 1%, rgb(255,255,255) 69%);
-              background-image: -webkit-linear-gradient(top, rgb(200,200,200) 1%, rgb(255,255,255) 69%);
-              background-image: -ms-linear-gradient(top, rgb(200,200,200) 1%, rgb(255,255,255) 69%);
-              
-              background-image: -webkit-gradient(
-              	linear,
-              	left top,
-              	left bottom,
-              	color-stop(0.01, rgb(200,200,200)),
-              	color-stop(0.69, rgb(255,255,255))
-              );
+              /* height: 100%; */
+              background-color: #ffffff;
+              background-image: linear-gradient(gray 0, white 100%);
+              background-attachment: fixed;
               margin-left: 10%;
               margin-right: 10%;
               font-family: verdana, garamond, sans-serif;
@@ -111,7 +105,6 @@
            div.back{
               font-size: 75%;
               text-align: center;
-              border-width: 0;
            }
            
            button, input, select{
@@ -286,23 +279,28 @@
   </xsl:template>
   
   <xsl:template match="body">
+    <xsl:variable name="maxItems" select="xs:integer(/TEI/text/front/descendant::*[@xml:id='cs_maxItemsPerPage']/text())"/>
+    <xsl:variable name="from" select="xs:integer(/TEI/text/front/descendant::*[@xml:id='cs_from']/text())"/>
+    <xsl:variable name="prevLabel"><xsl:choose><xsl:when test="$maxItems = 1"><xsl:value-of select="$from - 1"/></xsl:when><xsl:otherwise><xsl:value-of select="$from - $maxItems"/> - <xsl:value-of select="$from - 1"/></xsl:otherwise></xsl:choose></xsl:variable>
+    <xsl:variable name="nextLabel"><xsl:choose><xsl:when test="$maxItems = 1"><xsl:value-of select="$from + 1"/></xsl:when><xsl:otherwise><xsl:value-of select="$from + $maxItems"/> - <xsl:value-of select="min(($from + (2 * $maxItems) - 1, xs:integer(/TEI/text/front/descendant::*[@xml:id='cs_totalInstances']/text())))"/></xsl:otherwise></xsl:choose></xsl:variable>
     <xsl:variable name="navButtons">
       <p>
       <xsl:if test="string-length(/TEI/text/front/descendant::*[@xml:id='cs_prevUrl']/text()) gt 0">
-        <button onclick="location='{/TEI/text/front/descendant::*[@xml:id='cs_prevUrl']/text()}'">Previous (<xsl:value-of select="xs:integer(/TEI/text/front/descendant::*[@xml:id='cs_from']/text()) - xs:integer(/TEI/text/front/descendant::*[@xml:id='cs_maxItemsPerPage']/text())"/> - <xsl:value-of select="xs:integer(/TEI/text/front/descendant::*[@xml:id='cs_from']/text()) - 1"/>)</button>
+        <button onclick="location='{/TEI/text/front/descendant::*[@xml:id='cs_prevUrl']/text()}'">Previous (<xsl:value-of select="$prevLabel"/>)</button>
       </xsl:if>
       <xsl:if test="string-length(/TEI/text/front/descendant::*[@xml:id='cs_nextUrl']/text()) gt 0">
-        <button onclick="location='{/TEI/text/front/descendant::*[@xml:id='cs_nextUrl']/text()}'">Next (<xsl:value-of select="xs:integer(/TEI/text/front/descendant::*[@xml:id='cs_from']/text()) + xs:integer(/TEI/text/front/descendant::*[@xml:id='cs_maxItemsPerPage']/text())"/> - <xsl:value-of select="min((xs:integer(/TEI/text/front/descendant::*[@xml:id='cs_from']/text()) + (2 * xs:integer(/TEI/text/front/descendant::*[@xml:id='cs_maxItemsPerPage']/text())) - 1, xs:integer(/TEI/text/front/descendant::*[@xml:id='cs_totalInstances']/text())))"/> of <xsl:value-of select="/TEI/text/front/descendant::*[@xml:id='cs_totalInstances']/text()"/>)</button>
+        <button onclick="location='{/TEI/text/front/descendant::*[@xml:id='cs_nextUrl']/text()}'">Next (<xsl:value-of select="$nextLabel"/> of <xsl:value-of select="/TEI/text/front/descendant::*[@xml:id='cs_totalInstances']/text()"/>)</button>
       </xsl:if>
       </p>
     </xsl:variable>
-    
-    <div class="results">
-      <h4>Results</h4>
-    <xsl:copy-of select="$navButtons"/>
-    <xsl:apply-templates/>
-    <xsl:copy-of select="$navButtons"/>
-    </div>
+    <xsl:if test="child::*">
+      <div class="results">
+        <h4>Results</h4>
+      <xsl:copy-of select="$navButtons"/>
+      <xsl:apply-templates/>
+      <xsl:copy-of select="$navButtons"/>
+      </div>
+    </xsl:if>
   </xsl:template>
   
   <xsl:template match="list">
