@@ -117,9 +117,12 @@ declare function local:processVerb() as element()*{
   switch ($verb)
 (: Listing the distinct values of element names in the target namespace is easy. :)
     case 'listElements' return
-      if (collection($cs:rootCol)//*[namespace-uri() = $namespace]) then
+      let $q := concat("distinct-values(collection('", $cs:rootCol, "')//*[namespace-uri() = '", $namespace, "']/local-name())"),
+      $gis := util:eval($q)
+      return
+      if (count($gis) gt 1) then
        <list>
-       {for $gi in distinct-values(collection($cs:rootCol)//*[namespace-uri() = $namespace]/local-name())
+       {for $gi in $gis
        order by $gi
        return <item><gi>{$gi}</gi></item>}
        </list>
@@ -133,10 +136,13 @@ declare function local:processVerb() as element()*{
     strictly speaking that would be wrong. :)
     
    case 'listAttributes' return
-      if (collection($cs:rootCol)//node()/@*[namespace-uri() = $namespace] or collection($cs:rootCol)//node()[namespace-uri() = $namespace]/@*[namespace-uri() = ""]) then
+      let $q := concat("distinct-values((collection('", $cs:rootCol, "')//*/@*[namespace-uri() = '", $namespace, "']/name(), collection('", $cs:rootCol, "')//*[namespace-uri() = '", $namespace, "']/@*[namespace-uri() = '']/name()))"),
+      $atts := util:eval($q)
+      return if (count($atts) gt 0) then
+      (:if (collection($cs:rootCol)//node()/@*[namespace-uri() = $namespace] or collection($cs:rootCol)//node()[namespace-uri() = $namespace]/@*[namespace-uri() = ""]) then:)
         <list>
         {
-        for $att in distinct-values((collection($cs:rootCol)//node()/@*[namespace-uri() = $namespace]/name(), collection($cs:rootCol)//node()[namespace-uri() = $namespace]/@*[namespace-uri() = ""]/name()))
+        for $att in $atts
         order by $att
         return 
         if (string-length($att) gt 0) then 
