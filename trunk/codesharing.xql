@@ -67,6 +67,7 @@ declare variable $verb := request:get-parameter('verb', 'identify');
 (: The user may be interested only in specific namespaces. We default to TEI, naturally. :)
 declare variable $inputNamespace := if ($verb != 'listNamespaces') then request:get-parameter('namespace', 'http://www.tei-c.org/ns/1.0') else '';
 declare variable $namespace := if ($inputNamespace castable as xs:anyURI and matches($inputNamespace, '^[a-zA-Z]+://')) then $inputNamespace else '';
+declare variable $namespaceDeclaration := if ($namespace = '') then '' else concat("declare namespace temp='", $namespace, "'; ");
 (: If the verb is getExamples, then we need to know the element and/or attribute name and value. :)
 declare variable $inputElementName := if ($verb = 'getExamples') then request:get-parameter('elementName', '') else '';
 declare variable $elementName := if ($inputElementName castable as xs:NCName) then $inputElementName else '';
@@ -119,18 +120,22 @@ declare function local:processVerb() as element()*{
   Thanks to Jens Østergaard Petersen for a good suggestion for 
   optimizing this. :)
     case 'listElements' return
-      let $declaration := concat("declare namespace temp='", $namespace, "'; "),
-      $q := concat("distinct-values(collection('", $cs:rootCol, "')//temp:*/local-name())"),
-      $gis := util:eval(concat($declaration, $q))
-      return
-      if (count($gis) gt 1) then
-       <list>
-       {for $gi in $gis
-       order by $gi
-       return <item><gi>{$gi}</gi></item>}
-       </list>
-      else
-        <p>{$cs:noResultsFound}</p>
+      try{
+        let $q := 
+          if ($namespace = '') then concat("distinct-values(collection('", $cs:rootCol, "')//*[namespace-uri()='']/local-name())")
+          else concat("distinct-values(collection('", $cs:rootCol, "')//temp:*/local-name())"),
+        $gis := util:eval(concat($namespaceDeclaration, $q))
+        return
+        if (count($gis) gt 1) then
+         <list>
+         {for $gi in $gis
+         order by $gi
+         return <item><gi>{$gi}</gi></item>}
+         </list>
+        else
+          <p>{$cs:noResultsFound}</p>
+      }
+      catch * {<p>{$cs:noResultsFound}</p>}
       
 (:  Listing attributes is quite messy. We want two types of attribute, those which are explicitly in the namespace
     we're interested in, and those which are unprefixed [i.e. no-namespace] children of elements 
@@ -139,9 +144,11 @@ declare function local:processVerb() as element()*{
     strictly speaking that would be wrong. :)
     
    case 'listAttributes' return
-      let $declaration := concat("declare namespace temp='", $namespace, "'; "),
-      $q := concat("distinct-values((collection('", $cs:rootCol, "')//*/@temp:*/name(), collection('", $cs:rootCol, "')//temp:*/@*[namespace-uri()='']/name()))"),
-      $atts := util:eval(concat($declaration, $q))
+    try{
+      let $q := 
+        if ($namespace = '') then concat("distinct-values(collection('", $cs:rootCol, "')//*/@*[namespace-uri() = '']/name())")
+        else concat("distinct-values((collection('", $cs:rootCol, "')//*/@temp:*/name(), collection('", $cs:rootCol, "')//temp:*/@*[namespace-uri()='']/name()))"),
+      $atts := util:eval(concat($namespaceDeclaration, $q))
       return if (count($atts) gt 0) then
       (:if (collection($cs:rootCol)//node()/@*[namespace-uri() = $namespace] or collection($cs:rootCol)//node()[namespace-uri() = $namespace]/@*[namespace-uri() = ""]) then:)
         <list>
@@ -157,10 +164,13 @@ declare function local:processVerb() as element()*{
         </list>
       else
         <p>{$cs:noResultsFound}</p>
+       }
+      catch * {<p>{$cs:noResultsFound}</p>}
       
 (: Listing namespaces appears to be quite straightforward, although the reserved 
    xml-prefix namespace doesn't seem to be returned for some reason. :)
    case 'listNamespaces' return
+    try{
       if (collection($cs:rootCol)//node()) then
         <list>
         {for $ns in distinct-values(collection($cs:rootCol)//node()/namespace-uri())
@@ -174,13 +184,16 @@ declare function local:processVerb() as element()*{
         </list>
       else
         <p>{$cs:noResultsFound}</p>
-        
+       }
+      catch * {<p>{$cs:noResultsFound}</p>}
+      
 (: Listing the document types will typically vary from project to project, since there are so many ways 
    of encoding or deriving such information from TEI encoding. This example implementation uses the 
    TEI textClass/catRef/@target attribute, and expects to find the category descriptions in a taxonomy
    with the @xml:id 'documentTypes'. This is very TEI-specific, and in this respect it rather contrasts
    with the generic nature of the other verb parameters. :)
     case 'listDocumentTypes' return
+    try{
       if (collection($cs:rootCol)//taxonomy[@xml:id=$cs:documentTypeTaxonomyId]/category) then
        <list>
        {for $dt in collection($cs:rootCol)//taxonomy[@xml:id=$cs:documentTypeTaxonomyId]//category
@@ -189,6 +202,8 @@ declare function local:processVerb() as element()*{
        </list>
       else
         <p>{$cs:noResultsFound}</p>
+     }
+      catch * {<p>{$cs:noResultsFound}</p>}
       
 (: If the verb is getExamples, then we process and render all the examples we already
   retrieved. :)
@@ -199,50 +214,55 @@ declare function local:processVerb() as element()*{
 
 (: This function retrieves a set of nodes which match the input parameters. :)
 declare function local:getEgs() as element()*{
-      let $doctypePredicate := if ($documentType) then concat("[matches(descendant::tei:catRef/@target, '", $documentType, "')]") else ""
-      return
-      if (string-length($elementName) gt 0 and string-length($attributeName) gt 0) then
-(: Attributes in the context of an element.   :)
-      if (string-length($attributeValue) gt 0) then
-(: An attribute value is specified. :)
-        let $q := concat("collection('", $cs:rootCol, "')//tei:TEI", $doctypePredicate, "//*:", $elementName, "[namespace-uri() = '", $namespace, "'][@", $attributeName, "='", $attributeValue, "']")
-        return util:eval($q)
+      if ($verb != 'getExamples') then () 
       else
-(: An attribute value is not specified. :)
-        let $q := concat("collection('", $cs:rootCol, "')//tei:TEI", $doctypePredicate, "//*:", $elementName, "[namespace-uri() = '", $namespace, "'][@", $attributeName, "]")
-        return util:eval($q)
-      else
-        if  (string-length($elementName) gt 0) then
-(: Element is named but not attribute, although a value may still be supplied for attribute.       :)
-          if (string-length($attributeValue) gt 0) then
-(: There's an attribute value but no name for it.        :)
-            let $q := concat("collection('", $cs:rootCol, "')//tei:TEI", $doctypePredicate, "//*:", $elementName, "[namespace-uri() = '", $namespace, "'][@*='", $attributeValue, "']")
-            return util:eval($q)
-          else
-(: There's just an element name. Easy one. :)
-            let $q := concat("collection('", $cs:rootCol, "')//tei:TEI", $doctypePredicate, "//*:", $elementName, "[namespace-uri() = '", $namespace, "']")
-            return util:eval($q)
-        else 
-          if (string-length($attributeName) gt 0) then
-(: Attributes irrespective of their parent element. :)
-(: In this case, we have to retrieve in no namespace as well as in the specified
-   namespace. This is designed to produce intuitive results 
-   as well as results which are strictly speaking correct. :)
+        let $doctypePredicate := if ($documentType) then concat("[matches(descendant::tei:catRef/@target, '", $documentType, "')]") else ""
+        return
+      try {
+        if (string-length($elementName) gt 0 and string-length($attributeName) gt 0) then
+  (: Attributes in the context of an element.   :)
+        if (string-length($attributeValue) gt 0) then
+  (: An attribute value is specified. :)
+          let $q := concat("collection('", $cs:rootCol, "')//tei:TEI", $doctypePredicate, "//*:", $elementName, "[namespace-uri() = '", $namespace, "'][@", $attributeName, "='", $attributeValue, "']")
+          return util:eval($q)
+        else
+  (: An attribute value is not specified. :)
+          let $q := concat("collection('", $cs:rootCol, "')//tei:TEI", $doctypePredicate, "//*:", $elementName, "[namespace-uri() = '", $namespace, "'][@", $attributeName, "]")
+          return util:eval($q)
+        else
+          if  (string-length($elementName) gt 0) then
+  (: Element is named but not attribute, although a value may still be supplied for attribute.       :)
             if (string-length($attributeValue) gt 0) then
-(: An attribute value is specified. :)
-              let $q := concat("collection('", $cs:rootCol, "')//tei:TEI", $doctypePredicate, "//*[@*:", $attributeName, "[.='", $attributeValue, "' and (namespace-uri() = '' or namespace-uri() = '", $namespace, "')]]")
+  (: There's an attribute value but no name for it.        :)
+              let $q := concat("collection('", $cs:rootCol, "')//tei:TEI", $doctypePredicate, "//*:", $elementName, "[namespace-uri() = '", $namespace, "'][@*='", $attributeValue, "']")
               return util:eval($q)
             else
-(: An attribute value is not specified. :)
-            let $q := concat("collection('", $cs:rootCol, "')//tei:TEI", $doctypePredicate, "//*[@*:", $attributeName, "[namespace-uri() = '' or namespace-uri() = '", $namespace, "']]")
+  (: There's just an element name. Easy one. :)
+              let $q := concat("collection('", $cs:rootCol, "')//tei:TEI", $doctypePredicate, "//*:", $elementName, "[namespace-uri() = '", $namespace, "']")
               return util:eval($q)
-          else
-            if (string-length($attributeValue) gt 0) then 
-(: An attribute value and nothing else has been specified. :)
-                let $q := concat("collection('", $cs:rootCol, "')//tei:TEI", $doctypePredicate, "//*[@*:*[.='", $attributeValue, "' and (namespace-uri() = '' or namespace-uri() = '", $namespace, "')]]")
-              return util:eval($q)
+          else 
+            if (string-length($attributeName) gt 0) then
+  (: Attributes irrespective of their parent element. :)
+  (: In this case, we have to retrieve in no namespace as well as in the specified
+     namespace. This is designed to produce intuitive results 
+     as well as results which are strictly speaking correct. :)
+              if (string-length($attributeValue) gt 0) then
+  (: An attribute value is specified. :)
+                let $q := concat("collection('", $cs:rootCol, "')//tei:TEI", $doctypePredicate, "//*[@*:", $attributeName, "[.='", $attributeValue, "' and (namespace-uri() = '' or namespace-uri() = '", $namespace, "')]]")
+                return util:eval($q)
+              else
+  (: An attribute value is not specified. :)
+              let $q := concat("collection('", $cs:rootCol, "')//tei:TEI", $doctypePredicate, "//*[@*:", $attributeName, "[namespace-uri() = '' or namespace-uri() = '", $namespace, "']]")
+                return util:eval($q)
             else
-            ()
+              if (string-length($attributeValue) gt 0) then 
+  (: An attribute value and nothing else has been specified. :)
+                  let $q := concat("collection('", $cs:rootCol, "')//tei:TEI", $doctypePredicate, "//*[@*:*[.='", $attributeValue, "' and (namespace-uri() = '' or namespace-uri() = '", $namespace, "')]]")
+                return util:eval($q)
+              else
+              ()
+           }
+           catch * {()}
 };
 
 (: This renders a set of example nodes into a div full of <egXML> elements. :)
