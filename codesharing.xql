@@ -115,10 +115,13 @@ declare variable $prevUrl := if (string-length($prevParams) gt 0) then concat($u
 (: This is the main function that produces all the results. :)
 declare function local:processVerb() as element()*{
   switch ($verb)
-(: Listing the distinct values of element names in the target namespace is easy. :)
+(: Listing the distinct values of element names in the target namespace. 
+  Thanks to Jens Østergaard Petersen for a good suggestion for 
+  optimizing this. :)
     case 'listElements' return
-      let $q := concat("distinct-values(collection('", $cs:rootCol, "')//*[namespace-uri() = '", $namespace, "']/local-name())"),
-      $gis := util:eval($q)
+      let $declaration := concat("declare namespace temp='", $namespace, "'; "),
+      $q := concat("distinct-values(collection('", $cs:rootCol, "')//temp:*/local-name())"),
+      $gis := util:eval(concat($declaration, $q))
       return
       if (count($gis) gt 1) then
        <list>
@@ -136,8 +139,9 @@ declare function local:processVerb() as element()*{
     strictly speaking that would be wrong. :)
     
    case 'listAttributes' return
-      let $q := concat("distinct-values((collection('", $cs:rootCol, "')//*/@*[namespace-uri() = '", $namespace, "']/name(), collection('", $cs:rootCol, "')//*[namespace-uri() = '", $namespace, "']/@*[namespace-uri() = '']/name()))"),
-      $atts := util:eval($q)
+      let $declaration := concat("declare namespace temp='", $namespace, "'; "),
+      $q := concat("distinct-values((collection('", $cs:rootCol, "')//*/@temp:*/name(), collection('", $cs:rootCol, "')//temp:*/@*[namespace-uri()='']/name()))"),
+      $atts := util:eval(concat($declaration, $q))
       return if (count($atts) gt 0) then
       (:if (collection($cs:rootCol)//node()/@*[namespace-uri() = $namespace] or collection($cs:rootCol)//node()[namespace-uri() = $namespace]/@*[namespace-uri() = ""]) then:)
         <list>
