@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="file:/media/Data/mholmes/Documents/tei/jtei/issue_repo/trunk/oxygen/schema/jtei.rng" type="application/xml" schematypens="http://relaxng.org/ns/structure/1.0"?>
+<?xml-model href="file:/media/Data/mholmes/Documents/tei/jtei/issue_repo/trunk/oxygen/schema/jtei.rng" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt>
+        <title type="main">CodeSharing: 
+          a simple API for disseminating
+          our TEI encoding</title>
+        <author>
+          <name><forename>Martin</forename> <surname>Holmes</surname></name>
+        </author>
+      </titleStmt>
+      <publicationStmt>
+        <publisher>University of Victoria</publisher>
+        <date>2014</date>
+        <availability>
+          <p>University of Victoria Humanities Computing and Media Centre 2014 (Creative Commons Attribution-NoDerivs 3.0 Unported License)</p>
+        </availability></publicationStmt>
+      <sourceDesc>
+        <p>Born-digital document created as abstract for submission to TEI Conference 2014.</p>
+      </sourceDesc>
+    </fileDesc>
+  </teiHeader>
+  <text>
+
+    <body>
+      <div>
+        <head>Introduction</head>
+        <p>Although the TEI Guidelines are full of helpful examples, and other initiatives such as <title level="m">TEI By Example</title> have made great progress in providing more access to samples of text-encoding to help beginners get started, there is no doubt that one of the biggest obstacles to encoders at many levels is finding out how other scholars and projects have chosen to encode a particular feature or use a specific tag or attribute. <ref target="#burghart12" xml:id="burghart12_ref">Burghart and Rehbein</ref> tell us that the majority of TEI users are <quote source="#burghart12_ref">self-taught or learned by doing</quote>, and <ref target="#dee_forthcoming" xml:id="dee_forthcoming_ref">Dee (forthcoming)</ref> reports that users need <quote source="#dee_forthcoming_ref">a source for a compendium of examples suitable for inductive learning</quote>. Many projects now share their XML code, but that in itself is only marginally helpful; it can take substantial time to sift through the XML code in a large project to find what you're looking for. </p>
+        
+        <p>This talk presents a simple specification for an Application Programming Interface, along with a sample implementation written in XQuery and designed for the eXist XML database, providing straightforward access both for applications and end-users to sample code from any TEI project. The API is modelled on the Open Archives Initiative Protocol for Metadata Harvesting (OAI-PMH), a mechanism designed to allow archival search tools to ingest metadata from repositories. The CodeSharing protocol and the sample implementation were first presented at the Digital.Humanities@Oxford Summer School in July 2013, and a number of improvements have been made to the code and specification based on feedback from that presentation.</p>
+      </div>
+      
+      <div>
+        <head>Target audience</head>
+        <p>The CodeSharing proposal arises out of two separate but intersecting needs: those of novice encoders and project managers who are not really TEI experts, and those of people doing research into encoding practices on a large scale across multiple projects. </p>
+        
+        <div>
+          <head>Novice encoders</head>
+          
+          <p>At the time of writing, <title level="m">The Map of Early Modern London</title> (<title level="m">MoEML</title>) project, a typical grant-supported digital humanities project<note><title level="m">MoEML</title> is supported by a grant from the Social Sciences and Humanities Research Council of Canada.</note> with a large encoding component, has a team of around seven or eight encoders working part-time, with frequent changes of personnel. The project provides regular TEI training, but there is usually a mix of experienced and rookie encoders, and project managers have to provide a lot of live help to supplement the documentation. One of the most difficult things for inexperienced encoders is to find examples of the usage of elements and attributes they haven't used before. There are of course lots of resources to help with this, including the <title level="m">TEI Guidelines</title> examples, the <title level="m">TEI by Example</title> project, and Marjorie Burghart's <title level="m">Cheatsheets</title>, but it is unusual to find in such external resources enough examples of the use of a particular element or attribute which exactly match the current use-case. It is really more effective to search the codebase of your own project.</p>
+          
+          <p>The <title level="m">MoEML</title> encoders do have access to a lot of the existing codebase, but doing text searches of this is often ineffective. They are not normally familiar with XPath, XQuery, or regular expressions, and most will never learn them, so in searching for e.g. a <gi>birth</gi> element which has a <att>notBefore-custom</att> attribute, they will search for <quote>&lt;birth notBefore-custom</quote>, and therefore miss all the <gi>birth</gi> elements which happen to have their <att>datingMethod</att> attribute first, or which have two spaces between the tag name and the attribute name instead of one. Searching the entire codebase may also retrieve examples of encoding in obsolete or unedited documents, which might provide bad examples. It is more effective, therefore, to enable them to search the online XML database which contains only documents which have actually been published.</p>
+          
+          <p>To serve these needs, we began to think about writing a simple search interface which would form part of our <title level="m">MoEML</title> web application, and which would provide access to lots of examples of individual tags and attributes.
+          
+          <figure xml:id="codesharing_1">
+            <graphic url="images/codesharing_01.png" width="1116px" height="933px"/>
+            <head>The Web interface of the CodeSharing service on the <title level="m">MoEML</title> site.</head>
+          </figure>
+          
+          This straightforward form-based interface enables our encoders to retrieve examples of encoding quickly and easily from across our text collection.</p>
+          
+        </div>
+        
+        <div>
+          <head>Research into encoding practices</head>
+          
+          <p>As I worked on the interface above, I also began to think about broader possibilities. In our work on the TEI Council, we frequently find ourselves asking:
+         <list rend="bulleted"> 
+          <item>Do people ever actually use this element or attribute?</item>
+          <item>If so, how do they use it?</item>
+          </list>
+          We typically resort to posting questions to the TEI-L mailing list to ask for examples from the community, but this is a rather slow, hit-and-miss method of gathering data. <!--It has been proposed that we create a web application which would enable people to encode sample text for us, so that we can gather multiple encoding strategies for a particular feature as part of our research, but this would be time-consuming and would depend on generous commitment of time from list members.--> If we could retrieve large numbers of sample usages of particular elements or attributes and analyse them, this would be very helpful in development of the <title level="m">Guidelines</title>, and in assessing the impact of any change we might make to the schemas or recommendations. We might also be able to supply fresh examples for the <title level="m">Guidelines</title> text itself by selecting from among thousands of sample usages, rather than drawing only from our own projects or concocting examples. It would therefore be very helpful if there were an API that projects could implement to provide access to samples of their encoding practice in a standardized way, such that the same query could be run over multiple projects simultaneously and the results combined.</p>
+          
+        </div>
+        
+        <figure xml:id="codesharing_2">
+          <graphic url="images/codesharing_02.png" width="1596px" height="748px"/>
+          <head>A CodeSharing service can serve the needs of novice encoders as well as encoding researchers.</head>
+        </figure>
+        
+      </div>
+      
+      <div>
+        <head>The model: OAI-PMH</head>
+        
+        <p>To answer these needs, I designed a web service that could be provided by large- and medium-scale encoding projects, enabling anyone to gather examples of their encoding practice directly from their data. I modelled my protocol on an existing, well-tested system: the Open Archives Initiative Protocol for Metadata Harvesting, or OAI-PMH<note><ref target="http://www.openarchives.org/OAI/2.0/openarchivesprotocol.htm">http://www.openarchives.org/OAI/2.0/openarchivesprotocol.htm</ref></note>, which I had previously implemented for another project. </p>
+        
+        <p>OAI-PMH is commendably simple and well designed. A participating repository may be a data provider, which exposes structured metadata through a web service implementing the OAI-PMH API; or a service provider, which gathers that metadata through requests to the data providers. The service providers can then act as meta-repositories, or federated archives, providing search functionality which encompasses the collections of all the data providers who have exposed their metadata for harvesting. An example is OCLC's WorldCat<note><ref target="http://www.worldcat.org/">http://www.worldcat.org/</ref></note>, which aggregates data from a large number of repositories and makes them searchable from a single interface. The OAI-PMH API is based on HTTP requests using GET or POST. It is designed to allow a harvester to find out what kinds of resources a repository has, and to gather full metadata records. <!--It can also request records based on modification dates, so it is easy for the harvester to update itself by returning periodically to a data provider and requesting only changes made since the last harvest. -->All responses are in XML, and conform to a standard schema.</p>
+        
+        <p>OAI-PMH is based around six core <soCalled>verbs</soCalled>:
+        <list rend="bulleted">
+          <item><code>Identify</code></item>
+          <item><code>ListMetadataFormats</code></item>
+          <item><code>ListIdentifiers</code></item>
+          <item><code>ListSets</code></item>
+          <item><code>ListRecords</code></item>
+          <item><code>GetRecord</code></item>
+        </list>
+          A request like this<note>This request is made to the OAI-PMH interface provided by the <title level="m">Colonial Correspondence of BC and Vancouver Island</title> project, at <ref target="http://bcgenesis.uvic.ca/">http://bcgenesis.uvic.ca</ref>.</note>: 
+          
+          <eg>http://bcgenesis.uvic.ca/oai.xq?verb=Identify</eg>
+          
+          will result in a response in XML which provides identifying information about the repository:
+          
+          <egXML xmlns="http://www.tei-c.org/ns/Examples">
+            <OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd">
+              <responseDate>2013-05-08T18:09:31.047Z</responseDate>
+              <request verb="Identify">http://bcgenesis.uvic.ca/oai.xq</request>
+              <Identify>
+                <repositoryName>The colonial despatches of Vancouver Island and British Columbia
+                  1846-1871</repositoryName>
+                <baseURL>http://bcgenesis.uvic.ca/oai.xq</baseURL>
+                <protocolVersion>2.0</protocolVersion>
+                <adminEmail>mholmes@uvic.ca</adminEmail>
+                <adminEmail>cpetter@uvic.ca</adminEmail>
+                <earliestDatestamp>2012-11-19T12:00:00Z</earliestDatestamp>
+                <deletedRecord>no</deletedRecord>
+                <granularity>YYYY-MM-DD</granularity>
+                <description>
+                  <oai-identifier xmlns="http://www.openarchives.org/OAI/2.0/oai-identifier"
+                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                    xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/oai-identifier http://www.openarchives.org/OAI/2.0/oai-identifier.xsd">
+                    <scheme>oai</scheme>
+                    <repositoryIdentifier>bcgenesis.uvic.ca</repositoryIdentifier>
+                    <delimiter>:</delimiter>
+                    <sampleIdentifier>oai:bcgenesis.uvic.ca:B63030SP.scx</sampleIdentifier>
+                  </oai-identifier>
+                </description>
+              </Identify>
+            </OAI-PMH>
+          </egXML>
+          
+          The harvester can use the <code>ListRecords</code> verb to retrieve individual records, which are typically in the form of Dublin Core elements embedded in a larger structure in the OAI namespace:
+        
+        <egXML xmlns="http://www.tei-c.org/ns/Examples">
+          <record>
+            <header xmlns="http://www.openarchives.org/OAI/2.0/">
+              <identifier xmlns="http://www.openarchives.org/OAI/2.0/">oai:bcgenesis.uvic.ca:B585TE13.scx</identifier>
+              <datestamp xmlns="http://www.openarchives.org/OAI/2.0/">2013-12-17T14:29:44.553-08:00</datestamp>
+              <setSpec xmlns="http://www.openarchives.org/OAI/2.0/">1858</setSpec>
+              <setSpec xmlns="http://www.openarchives.org/OAI/2.0/">publicOffices</setSpec>
+              <setSpec xmlns="http://www.openarchives.org/OAI/2.0/">B.C.</setSpec>
+            </header>
+            <metadata xmlns="http://www.openarchives.org/OAI/2.0/">
+              <oai_dc:dc xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd">
+               <dc:title>The colonial despatches of Vancouver Island and British Columbia 1846-1871: 11566, CO 60/2, p. 291; received 13 November. Trevelyan to Merivale (Permanent Under-Secretary)</dc:title>
+               <dc:date>1858-11-12</dc:date>
+               [...]
+              </oai_dc:dc>
+            </metadata>
+          </record>
+        </egXML>
+        
+        </p>
+        
+        <p>Most repositories will have thousands of records, and retrieving them all at once would place an unacceptable burden on the server and network infrastructure, so OAI-PMH has a built-in staging system. Records are supplied in batches, and each batch ends with a <term>resumption token</term> which acts as a flow-control device:
+        
+        <egXML xmlns="http://www.tei-c.org/ns/Examples">
+          <resumptionToken completeListSize="7154">
+            from:2010-01-01;until:2020-01-01;set:;next:21
+          </resumptionToken>
+        </egXML>
+          
+          The format of the resumption token is not defined by the specification; the data provider may use any suitable format, and the harvester simply has to echo it back to the data provider to get the next set of records. This gives the data provider complete control over how rapidly it provides the data, and even in the course of a large transfer, the provider can throttle or accelerate its provision of records in response to local conditions such as server load or network bandwidth.
+        </p>
+        
+      </div>
+      
+      <div>
+        <head>The CodeSharing service</head>
+        
+        <p>The complete specification for the CodeSharing API is available at <ref target="http://mapoflondon.uvic.ca/codesharing_protocol.xhtml">http://mapoflondon.uvic.ca/codesharing_protocol.xhtml</ref>, as part of the sample implementation on the <title level="m">MoEML</title> site; in what follows I cover only some key aspects of it.</p>
+        
+        <div>
+          <head>The request API</head>
+        <p>CodeSharing is an XML-based API provided over HTTP, just like OAI-PMH. On the model of OAI-PMH, it's also based on a <soCalled>verb</soCalled> parameter, with five possible values:
+          
+          <list rend="bulleted">
+            <item><code>identify</code></item>
+            <item><code>listElements</code></item>
+            <item><code>listAttributes</code></item>
+            <item><code>listNamespaces</code></item>
+            <item><code>getExamples</code></item>
+          </list>
+          
+          The first four are designed to discover the nature of the repository, and what elements, attributes and namespaces occur in its document collections. The final value is a request for actual example encodings; when that value is used, other key-value pairs provide details about what has been requested:
+          
+          <list rend="bulleted">
+            <item><code>elementName</code></item>
+            <item><code>attributeName</code></item>
+            <item><code>attributeValue</code></item>
+          </list>
+          
+          Each parameter is used to specify what examples are being requested. These can obviously be combined, so a request for:
+          
+          <eg><code>elementName=hi&amp;attributeName=rend</code></eg>
+          
+          will retrieve only <code>hi</code> elements which have <att>rend</att> attributes;
+            
+          <eg><code>attributeName=rend&amp;value=italic</code></eg>
+            
+            will retrieve any elements which have <att>rend</att>=<val>italic</val>.</p>
+            
+            <p>Two further parameters are available:
+              <list rend="bulleted">
+            <item><code>namespace</code> (the namespace for requested elements, defaulting to the TEI namespace)</item>
+            <item><code>wrapped</code> (whether or not to return the parent containing the target element)</item>
+            </list>
+              
+            So a request for:
+            
+            <eg><code>elementName=hi&amp;wrapped=true</code></eg>
+            
+            will retrieve <gi>hi</gi> elements in the context of their parent element. Encoders find it helpful to see not just the target element, but the surrounding context too.
+        </p>
+          
+          <p>Finally, we have to consider flow control, as in the case of OAI-PMH. It would be disastrous to attempt to honour a request for all of the <gi>TEI</gi> elements in a large collection; we need to negotiate a reasonable chunk size for the harvester and the server. In the case of OAI-PMH, the data provider always dictates the number of records it is prepared to supply. In the case of CodeSharing, I wanted to allow a little more flexibility, so there is a further parameter the harvester can provide:
+            
+            <list rend="bulleted"><item><code>maxItemsPerPage</code> (a positive integer)</item></list>
+            
+           The provider service is not required to honour this request; it may decide to send fewer items. But it may be sensitive enough to know, for instance, that when the request is for a relatively small element such as <gi>hi</gi>, it might be practical to send 100 examples in one response, whereas it might send only 20 in the case of requests for <gi>p</gi> or <gi>div</gi> elements. </p>
+          
+        </div>
+        
+        <div>
+          <head>The response</head>
+          
+          <p>What form should the server's response take? The obvious answer is that it should be XML, and in fact that it should be TEI P5 XML. The exact format of the response document is only loosely specified, although some parts of it must follow certain rules. If the value of the <code>verb</code> parameter is <code>listElements</code>, for instance, then the body of the document must contain the list of all elements appearing in the collection as a list:
+          
+          <egXML xmlns="http://www.tei-c.org/ns/Examples">
+            <list rend="bulleted">
+              <item>
+                <gi>author</gi>
+              </item>
+              <item>
+                <gi>availability</gi>
+              </item>
+              <item>
+                <gi>back</gi>
+              </item>
+              [...]
+            </list>
+          </egXML>
+          
+          Similar structures are used to list attributes and namespaces.</p>
+          
+          <p>For returning actual examples, CodeSharing makes use of the <gi>egXML</gi> element 
+            which is also used for example code in the <title level="m">TEI Guidelines</title>. The <gi>egXML</gi> element is in its own special namespace, <code>http://www.tei-c.org/ns/Examples</code>, and all the elements which are children of it, in the example code, are also by default in that namespace. This is useful, because it means that we can easily distinguish example code from other parts of the TEI file. (It also means we can use the API to retrieve examples of code <emph>which themselves are intended as examples in their original context</emph>.) </p>
+          
+          <p>In addition to the results of the query, the protocol specification also requires that the parameters of the original request be returned to the requestor; this means that the result document is a complete and self-contained record of the query and results. Full details are available in the protocol documentation.</p>
+        </div>
+        
+      </div>
+      
+      <div>
+        <head>A sample implementation</head>
+        <p>A sample implementation of the CodeSharing protocol, including an HTML front-end, as shown in <ptr type="crossref" target="#codesharing_1"/>, is available at <ref target="http://mapoflondon.uvic.ca/codesharing.htm">http://mapoflondon.uvic.ca/codesharing.htm</ref>. It is written in XQuery 3.0 and runs in the eXist XML database which hosts the <title level="m">MoEML</title> web application. The open-source code is available on SourceForge at <ref target="https://sourceforge.net/projects/codesharing/">https://sourceforge.net/projects/codesharing/</ref>, and includes these files:
+        
+          <list rend="bulleted">
+            <item><code>codesharing.xql</code> (the XQuery implementation providing responses to queries in XML)</item>
+            <item><code>codesharing_config.xql</code> (a simple settings file that tailors the service to your own project)</item>
+            <item><code>codesharing.xsl</code> (a transformation which produces the HTML search page you see on the <title level="m">MoEML</title> site)</item>
+            <item><code>codesharing_protocol.xhtml</code> (a semi-formal description of the API)</item>
+            <item><code>codesharing.odd</code> (an ODD file from which a schema can be generated to validate CodeSharing API responses)</item>
+          </list>
+          
+          I would welcome any contributions in the form of improvements, suggestions, and implementations in other languages.
+          
+        </p>
+        
+      </div>
+      
+    </body>
+    <back>
+      <div type="bibliography">
+        <listBibl>
+          <bibl xml:id="burghart12"><author>Burghart, Marjorie</author>, and <author>Malte Rehbein</author>. <date>2012</date>. <title level="a">The Present and Future of the TEI Community for Manuscript Encoding</title>. <title level="j">Journal of the Text Encoding Initiative</title> <biblScope unit="issue">2</biblScope>. <ref target="http://jtei.revues.org/372">http://jtei.revues.org/372</ref>. doi:<idno type="doi">10.4000/jtei.372</idno>.</bibl>
+          <bibl xml:id="dee_forthcoming"><author>Dee, Stella</author>. <date>Forthcoming</date>. <title level="a">Learning the TEI in a Digital Environment</title>. <title level="j">Journal of the Text Encoding Initiative</title> <biblScope unit="issue">7</biblScope>.</bibl>
+          <bibl xml:id="oai-pmh"><title level="m">Open Archives Protocol for Metadata Harvesting (OAI-PMH)</title> Version 2.0. <date>2008</date>. <ref target="http://www.openarchives.org/OAI/2.0/openarchivesprotocol.htm">http://www.openarchives.org/OAI/2.0/openarchivesprotocol.htm</ref>.</bibl>
+          <bibl xml:id="vandenbranden10"><author>Van den Branden, Ron</author>, <author>Melissa Terras</author>, and <author>Edward Vanhoutte</author>. <date>2010</date>. <title level="m">TEI by Example</title>. <ref target="http://www.teibyexample.org/">http://www.teibyexample.org/</ref>.</bibl>
+        </listBibl>
+        
+      </div>
+    </back>
+  </text>
+</TEI>
