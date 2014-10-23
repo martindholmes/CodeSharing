@@ -113,7 +113,11 @@ declare variable $prevUrl := if (string-length($prevParams) gt 0) then concat($u
 (: FUNCTIONS THAT DO ALL THE ACTUAL WORK.                                        :)
 (: ------------------------------------------------------------------------------:)
 
-(: This is the main function that produces all the results. :)
+(: This is the main function that produces all the results. 
+
+    @return a sequence of element()s retrieved or constructed based on the 
+                  variables containing the external input parameters.
+:)
 declare function local:processVerb() as element()*{
   switch ($verb)
 (: Listing the distinct values of element names in the target namespace. 
@@ -190,8 +194,8 @@ declare function local:processVerb() as element()*{
 (: Listing the document types will typically vary from project to project, since there are so many ways 
    of encoding or deriving such information from TEI encoding. This example implementation uses the 
    TEI textClass/catRef/@target attribute, and expects to find the category descriptions in a taxonomy
-   with the @xml:id 'documentTypes'. This is very TEI-specific, and in this respect it rather contrasts
-   with the generic nature of the other verb parameters. :)
+   with the @xml:id defined in the configuration file. This is very TEI-specific, and in this respect it rather 
+   contrasts with the generic nature of the other verb parameters. :)
     case 'listDocumentTypes' return
     try{
       if (collection($cs:rootCol)//taxonomy[@xml:id=$cs:documentTypeTaxonomyId]/category) then
@@ -212,7 +216,11 @@ declare function local:processVerb() as element()*{
    default return ()
 };
 
-(: This function retrieves a set of nodes which match the input parameters. :)
+(: This function retrieves a set of nodes which match the input parameters. 
+
+    @return a sequence of element()s retrieved from the document collection
+                  based on the input parameters.
+:)
 declare function local:getEgs() as element()*{
       if ($verb != 'getExamples') then () 
       else
@@ -265,7 +273,13 @@ declare function local:getEgs() as element()*{
            catch * {()}
 };
 
-(: This renders a set of example nodes into a div full of <egXML> elements. :)
+(: This renders a set of example nodes into a div full of <egXML> elements. 
+    
+    @param $egs code samples as a sequence of node()s.
+    @return a sequence of <egXML> elements, each containing an example
+                 converted to the Examples namespace.
+
+:)
 declare function local:renderCodeSamples($egs as node()*) as element()*{
   let $lastItem := min((count($egs), $from + $maxItemsPerPage - 1))
   return
@@ -286,7 +300,13 @@ declare function local:renderCodeSamples($egs as node()*) as element()*{
 
 (: This function wraps an element in the <egXML> parent 
    and calls a function to change its namespace to the 
-   TEI Examples namespace. :)
+   TEI Examples namespace. 
+   
+   @param $el the element to be wrapped in <egXML>, and whose namespace is to be changed.
+   @return an <egXML> element in the Examples namespace and containing a copy of 
+                 $el with the same local-name, but switched to the Examples namespace.
+                 
+   :)
 declare function local:toEgXML($el as element()) as element()*{
   <egXML xmlns="http://www.tei-c.org/ns/Examples" source="{root($el)/*[1]/@xml:id}.xml">
   {local:toExampleNamespace($el)}
@@ -294,7 +314,13 @@ declare function local:toEgXML($el as element()) as element()*{
 };
 
 (: This function is called recursively to change the namespace of elements
-   to the TEI Examples namespace. :)
+   to the TEI Examples namespace. 
+   
+   @param $el the element whose namespace is to be changed as element().
+   @return a copy of the element with the same local-name but in the Examples 
+                namespace, as element().
+   
+   :)
 declare function local:toExampleNamespace($el as element()) as element()*{
   element {QName("http://www.tei-c.org/ns/Examples", $el/local-name())}
   {$el/@*,
@@ -305,7 +331,12 @@ declare function local:toExampleNamespace($el as element()) as element()*{
 };
 
 (: This function is borrowed with thanks from Eric van der Vlist, 
-   http://www.balisage.net/Proceedings/vol7/print/Vlist02/BalisageVol7-Vlist02.html:)
+   http://www.balisage.net/Proceedings/vol7/print/Vlist02/BalisageVol7-Vlist02.html
+   
+   @param $text the input string as xs:string.
+   @return xs:string with the ampersands, apostrophes and quotes escaped.
+   
+   :)
 declare function local:sanitizeString($text as xs:string) as xs:string {
   let $s := replace(replace($text, '&amp;', '&amp;amp;'), '''', '&amp;apos;')
   return replace($s, '"', '&amp;quot;')
