@@ -63,12 +63,23 @@ declare variable $cs:noResultsFound := 'No results found.';
 declare variable $cs:identification := concat('TEI CodeSharing service by Martin Holmes, running on ', $cs:projectName, '.');
 
 (: TEI has many ways to specify document types. This default implementation assumes that the 
-   document types are enumerated in a tei:taxonomy element with a specific @xml:id. :)
+   document types are enumerated in a tei:taxonomy element with a specific @xml:id. 
+   If you have such a taxonomy, change the xml:id below to match it; otherwise, you could customize 
+   the code in codesharing.xql which retrieves document types, and that which uses document
+   type as a filter for examples. :)
 declare variable $cs:documentTypeTaxonomyId := 'molDocumentTypes';
 
 (: This function returns a more constrained value for the maximum items allowed in one result 
    set, based on tag name and whether the tag is to be returned "wrapped" in its parent element 
-   or not. Customize this function to meet the needs of your project and server. :)
+   or not. Customize this function to meet the needs of your project and server. 
+   
+   @param $requestedMaxItems number of items requested by user as xs:integer.
+   @param $elementName the name of the element of which examples are being requested as xs:string.
+   @param $wrapped whether or not the user has requested the element be returned in the context
+                                   of its parent as xs:boolean.
+   @return the number of examples that should be returned as xs:integer.
+   
+   :)
 declare function cs:refineMaxItemsPerPage($requestedMaxItems as xs:integer, 
                                           $elementName as xs:string, 
                                           $wrapped as xs:boolean) as xs:integer{
