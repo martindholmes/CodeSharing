@@ -265,7 +265,7 @@ declare function local:getEgs() as element()*{
             else
               if (string-length($attributeValue) gt 0) then 
   (: An attribute value and nothing else has been specified. :)
-                  let $q := concat("collection('", $cs:rootCol, "')//tei:TEI", $doctypePredicate, "//*[@*:*[.='", $attributeValue, "' and (namespace-uri() = '' or namespace-uri() = '", $namespace, "')]]")
+                  let $q := concat("collection('", $cs:rootCol, "')//tei:TEI", $doctypePredicate, "//*[@*[.='", $attributeValue, "' and (namespace-uri() = '' or namespace-uri() = '", $namespace, "')]]")
                 return util:eval($q)
               else
               ()
