@@ -177,7 +177,7 @@ declare function local:processVerb() as element()*{
     try{
       if (collection($cs:rootCol)//node()) then
         <list>
-        {for $ns in distinct-values(collection($cs:rootCol)//node()/namespace-uri())
+        {for $ns in distinct-values(collection($cs:rootCol)//(*|@*)/namespace-uri())
         order by $ns
         return 
         if (string-length($ns) gt 0) then
