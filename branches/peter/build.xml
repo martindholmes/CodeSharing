@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+Dual-licensed under CC-by and BSD2 licences 
+$Date$
+$Id$
+-->
+
+<project default="xar" name="codesharing">
+    <!-- import default properties from file -->
+    <property file="local.build.properties"/>
+    <property file="build.properties"/>
+    
+    <target name="all" depends="xar"/>
+    <target name="rebuild" depends="clean,all"/>
+    
+    <target name="clean">
+        <delete file="expath-pkg.xml"/>
+    </target>
+    
+    <target name="init">
+        <mkdir dir="${build.dir}"/>
+    </target>
+    
+    <target name="get-current-workingcopy-revision">
+        <description>Get the current subversion revision of the working copy</description>
+        <exec executable="${bash.command}" outputproperty="local.revision">
+            <arg value="-c"/>
+            <arg value="${svn.command} info | ${egrep.command} 'Last Changed Rev' | ${egrep.command} -o '[[:digit:]]+'"/>
+            <env key="LANG" value="C"/>
+        </exec>
+        <echo>Current revision of the working copy: ${local.revision}</echo>
+    </target>
+    
+    <target name="xar" depends="init,get-current-workingcopy-revision">
+        <description>Create an EXPath xar package for use with eXist-db</description>
+        <copy file="expath-pkg.xml.tmpl" tofile="expath-pkg.xml" filtering="true" overwrite="true">
+            <filterset>
+                <filter token="project.version" value="${project.version}"/>
+                <filter token="project.app" value="${project.app}"/>
+            </filterset>
+        </copy>
+        <zip destfile="${build.dir}/${project.app}-${project.version}-r${local.revision}.xar">
+            <fileset dir=".">
+                <include name="*.*"/>
+                <include name="modules/**"/>
+                <include name="data/**"/>
+                <exclude name="build.xml"/>
+                <exclude name="*build.properties"/>
+                <exclude name=".svn*"/>
+                <exclude name="*.tmpl"/>
+                <exclude name="*.txt"/>
+            </fileset>
+        </zip>
+    </target>
+    
+</project>
