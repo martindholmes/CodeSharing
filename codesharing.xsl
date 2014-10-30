@@ -436,10 +436,18 @@
   </xsl:template>
   
 <!-- <gi> elements specify tag names, and should be embellished with angle brackets. -->
-  <xsl:template match="gi"><code class="xmlTag">&lt;<xsl:value-of select="."/>&gt;</code></xsl:template>
+  <xsl:template match="gi"><code class="xmlTag">&lt;<a>
+    <xsl:attribute name="href">
+      <xsl:value-of select="concat(//*[@xml:id='cs_url']/text(), '?verb=getExamples&amp;elementName=', .)"/>
+    </xsl:attribute>
+    <xsl:value-of select="."/></a>&gt;</code></xsl:template>
   
   <!-- <att> elements specify attribute names, and should be prefixed with @. -->
-  <xsl:template match="att"><code class="xmlAttName">@<xsl:value-of select="."/></code></xsl:template>
+  <xsl:template match="att"><code class="xmlAttName">@<a>
+    <xsl:attribute name="href">
+      <xsl:value-of select="concat(//*[@xml:id='cs_url']/text(), '?verb=getExamples&amp;attributeName=', .)"/>
+    </xsl:attribute>
+    <xsl:value-of select="."/></a></code></xsl:template>
   
   <!-- <val> elements specify attribute values, and should be quoted. -->
   <xsl:template match="val"><code class="xmlAttVal">"<xsl:value-of select="."/>"</code></xsl:template>
