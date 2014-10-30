@@ -25,7 +25,7 @@ $Id$
         <description>Get the current subversion revision of the working copy</description>
         <exec executable="${bash.command}" outputproperty="local.revision">
             <arg value="-c"/>
-            <arg value="${svn.command} info | ${egrep.command} 'Last Changed Rev' | ${egrep.command} -o '[[:digit:]]+'"/>
+            <arg value="${svn.command} info | ${grep.command} -E 'Last Changed Rev' | ${grep.command} -E -o '[[:digit:]]+'"/>
             <env key="LANG" value="C"/>
         </exec>
         <echo>Current revision of the working copy: ${local.revision}</echo>
