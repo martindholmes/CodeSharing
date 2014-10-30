@@ -443,4 +443,4 @@ return if ($outputType = 'xml') then
 else 
   let $opt := util:declare-option('exist:serialize', 'method=html5 media-type=text/html') 
   return
-  transform:transform($doc, doc("/db/dev/codesharing/codesharing.xsl"), ())
+  transform:transform($doc, doc("codesharing.xsl"), ())
