@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<meta xmlns="http://exist-db.org/xquery/repo">
+    <description>CodeSharing</description>
+    <author>Martin Holmes</author>
+    <website>http://codesharing.sourceforge.net/</website>
+    <status>dev</status>
+    <license>dual-licensed under CC-by and BSD2 licences</license>
+    <copyright>true</copyright>
+    <type>application</type>
+    <target>codesharing</target>
+    <!--<prepare>pre-install.xql</prepare>-->
+    <!--<finish>post-install.xql</finish>-->
+<!--    <permissions user="guest" password="guest" group="guest" mode="rw-rw-r-\-"/>-->
+</meta>
