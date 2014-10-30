@@ -54,7 +54,7 @@ declare variable $cs:projectName := 'The Map of Early Modern London';
 
 (: If you want to provide access to the protocol description document,
    set this variable appropriately. :)
-declare variable $cs:protocolDescUrl := 'codesharing_protocol.xhtml';
+declare variable $cs:protocolDescUrl := 'data/codesharing_protocol.xhtml';
 
 (: Set this variable to a suitable string. :)
 declare variable $cs:noResultsFound := 'No results found.';
