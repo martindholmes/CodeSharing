@@ -93,3 +93,14 @@ declare function cs:refineMaxItemsPerPage($requestedMaxItems as xs:integer,
                 else
                     $requestedMaxItems
 };
+
+(:~
+ : creates URLs for a given element (called by codesharing.xql/local:toEgXML())
+ : modify function to suit your own needs of linking to the according resources
+ :
+ : @param $el some TEI element found by a codesharing query
+ : @return an URL 
+~:)
+declare function cs:link-to-resource($el as element()) as xs:string? {
+    root($el)/*[1]/@xml:id || '.xml'
+};

@@ -308,7 +308,7 @@ declare function local:renderCodeSamples($egs as node()*) as element()*{
                  
    :)
 declare function local:toEgXML($el as element()) as element()*{
-  <egXML xmlns="http://www.tei-c.org/ns/Examples" source="{root($el)/*[1]/@xml:id}.xml">
+  <egXML xmlns="http://www.tei-c.org/ns/Examples" source="{cs:link-to-resource($el)}">
   {local:toExampleNamespace($el)}
   </egXML>
 };
