@@ -21,7 +21,7 @@ $Id$
 :)
 
 module namespace cs="http://hcmc.uvic.ca/namespaces/exist/codesharing";
-
+declare default element namespace "http://www.tei-c.org/ns/1.0";
 declare namespace exist = "http://exist.sourceforge.net/NS/exist"; 
 
 (: This should be set to application/tei+xml, but that makes Firefox open a fresh tab, which is annoying. :)
@@ -62,12 +62,44 @@ declare variable $cs:noResultsFound := 'No results found.';
 (: Set this string to a useful explanation of the site and the API itself. :)
 declare variable $cs:identification := concat('TEI CodeSharing service by Martin Holmes, running on ', $cs:projectName, '.');
 
-(: TEI has many ways to specify document types. This default implementation assumes that the 
-   document types are enumerated in a tei:taxonomy element with a specific @xml:id. 
-   If you have such a taxonomy, change the xml:id below to match it; otherwise, you could customize 
-   the code in codesharing.xql which retrieves document types, and that which uses document
-   type as a filter for examples. :)
-declare variable $cs:documentTypeTaxonomyId := 'molDocumentTypes';
+(: This function retrieves a list of document types [which can be anything your project 
+   believes would qualify as a way of typing documents]. Customize this function to 
+   return the list of document types in your own project, and then customize the next 
+   function to return a filtering predicate based on a supplied document type. 
+   Document types should be returned as a list of items, each of which contains a name
+   element followed by a brief text description. 
+   
+   If you don't care about document types, this should just return the empty sequence. 
+   
+   @return a TEI <list> element containing items like this:
+                <item><name>[doctype]</name> [description]</item>
+           for each of the document types in your collection; or an empty sequence.
+   :)
+declare function cs:getDocumentTypeList() as element(list)?{
+    if (collection($cs:rootCol)//taxonomy[@xml:id='molDocumentTypes']/category) then
+       <list>
+       {for $dt in collection($cs:rootCol)//taxonomy[@xml:id='molDocumentTypes']//category
+       order by $dt/@xml:id
+       return <item xml:id="{xs:string($dt/@xml:id)}"><name>{xs:string($dt/@xml:id)}</name> : {$dt/catDesc/(*|text())}</item>}
+       </list>
+    else ()
+};
+
+
+(: This function, supplied with a document type identifier in the form of a string, returns an XPath
+   predicate which can be used to filter result sets of examples so they are drawn only from the 
+   document type specified. Customize this to suit the structure of your repository.
+   
+   If you don't care about document types, this should just return an empty string. 
+   
+   @param $documentType a string value identifying one specific document type in your repository.
+   @return an XPath predicate which can be used to filter result sets of examples so that they 
+           come only from the specified document type.
+   
+   :)
+declare function cs:getDocumentTypeFilterPredicate($documentType as xs:string) as xs:string{
+     if ($documentType) then concat("[matches(descendant::tei:catRef/@target, '", $documentType, "')]") else ""
+};
 
 (: This function returns a more constrained value for the maximum items allowed in one result 
    set, based on tag name and whether the tag is to be returned "wrapped" in its parent element 
@@ -83,13 +115,13 @@ declare variable $cs:documentTypeTaxonomyId := 'molDocumentTypes';
 declare function cs:refineMaxItemsPerPage($requestedMaxItems as xs:integer, 
                                           $elementName as xs:string, 
                                           $wrapped as xs:boolean) as xs:integer{
-        if ($elementName = $cs:hugeElements) then 1
+    if ($elementName = $cs:hugeElements) then 1
+    else
+        if ($elementName = $cs:largeElements) then 
+            if ($wrapped = true()) then 1
+                else 3
         else
-            if ($elementName = $cs:largeElements) then 
-                if ($wrapped = true()) then 1
-                    else 3
+            if ($elementName = $cs:mediumElements and $wrapped = true()) then 3
             else
-                if ($elementName = $cs:mediumElements and $wrapped = true()) then 3
-                else
-                    $requestedMaxItems
+                $requestedMaxItems
 };
