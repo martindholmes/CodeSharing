@@ -198,12 +198,10 @@ declare function local:processVerb() as element()*{
    contrasts with the generic nature of the other verb parameters. :)
     case 'listDocumentTypes' return
     try{
-      if (collection($cs:rootCol)//taxonomy[@xml:id=$cs:documentTypeTaxonomyId]/category) then
-       <list>
-       {for $dt in collection($cs:rootCol)//taxonomy[@xml:id=$cs:documentTypeTaxonomyId]//category
-       order by $dt/@xml:id
-       return <item xml:id="{xs:string($dt/@xml:id)}"><name>{xs:string($dt/@xml:id)}</name> : {$dt/catDesc/(*|text())}</item>}
-       </list>
+      let $docTypeList := cs:getDocumentTypeList()
+      return
+      if ($docTypeList) then
+       $docTypeList
       else
         <p>{$cs:noResultsFound}</p>
      }
@@ -224,7 +222,7 @@ declare function local:processVerb() as element()*{
 declare function local:getEgs() as element()*{
       if ($verb != 'getExamples') then () 
       else
-        let $doctypePredicate := if ($documentType) then concat("[matches(descendant::tei:catRef/@target, '", $documentType, "')]") else ""
+        let $doctypePredicate := if ($documentType) then cs:getDocumentTypeFilterPredicate($documentType) else ""
         return
       try {
         if (string-length($elementName) gt 0 and string-length($attributeName) gt 0) then
