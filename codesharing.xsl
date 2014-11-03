@@ -50,6 +50,18 @@
                 return false;
               }
             }
+            
+            function changePage(sender){
+              var startFrom = sender.options[sender.selectedIndex].value;
+              var loc = document.location.toString();
+              var matcher = /from=\d+(&amp;|$)/;
+              if (loc.match(matcher)){
+                document.location = loc.replace(matcher, 'from='+startFrom);
+              }
+              else{
+                document.location = loc + '&amp;from=' + startFrom;
+              }
+            }
             </xsl:comment>
         </script>
         
@@ -108,6 +120,7 @@
            
            div.results>div{
               border-width: 0;
+              clear: both;
            }
            
            div p{
@@ -117,6 +130,7 @@
            div.back{
               font-size: 75%;
               text-align: center;
+              clear: both;
            }
            
            button, input, select{
@@ -136,6 +150,22 @@
            button, input, select, label{
               margin-bottom: 0.25em;
               margin-top: 0.25em;
+           }
+           
+           p.paginator{
+              margin: 0.25em 0 0.25em auto;
+              padding-right: 1%;
+              text-align: right;
+              width: 45%;
+              float: right;
+           }
+           
+           p.nextPrevButtons{
+              margin: 0.25em auto 0.25em 0;
+              padding-left: 1%;
+              text-align: left;
+              width: 45%;
+              float: left;
            }
            
            input[type=text], select{
@@ -369,17 +399,36 @@
   <xsl:template match="body">
     <xsl:variable name="maxItems" select="xs:integer(/TEI/text/front/descendant::*[@xml:id='cs_maxItemsPerPage']/text())"/>
     <xsl:variable name="from" select="xs:integer(/TEI/text/front/descendant::*[@xml:id='cs_from']/text())"/>
+    <xsl:variable name="totalInstances" select="xs:integer(/TEI/text/front/descendant::*[@xml:id='cs_totalInstances']/text())"/>
     <xsl:variable name="prevLabel"><xsl:choose><xsl:when test="$maxItems = 1"><xsl:value-of select="$from - 1"/></xsl:when><xsl:otherwise><xsl:value-of select="$from - $maxItems"/> - <xsl:value-of select="$from - 1"/></xsl:otherwise></xsl:choose></xsl:variable>
-    <xsl:variable name="nextLabel"><xsl:choose><xsl:when test="$maxItems = 1"><xsl:value-of select="$from + 1"/></xsl:when><xsl:otherwise><xsl:value-of select="$from + $maxItems"/> - <xsl:value-of select="min(($from + (2 * $maxItems) - 1, xs:integer(/TEI/text/front/descendant::*[@xml:id='cs_totalInstances']/text())))"/></xsl:otherwise></xsl:choose></xsl:variable>
+    <xsl:variable name="nextLabel"><xsl:choose><xsl:when test="$maxItems = 1"><xsl:value-of select="$from + 1"/></xsl:when><xsl:otherwise><xsl:value-of select="$from + $maxItems"/> - <xsl:value-of select="min(($from + (2 * $maxItems) - 1, $totalInstances))"/></xsl:otherwise></xsl:choose></xsl:variable>
+    
     <xsl:variable name="navButtons">
-      <p>
-      <xsl:if test="string-length(/TEI/text/front/descendant::*[@xml:id='cs_prevUrl']/text()) gt 0">
-        <button onclick="location='{/TEI/text/front/descendant::*[@xml:id='cs_prevUrl']/text()}'">Previous (<xsl:value-of select="$prevLabel"/>)</button>
-      </xsl:if>
-      <xsl:if test="string-length(/TEI/text/front/descendant::*[@xml:id='cs_nextUrl']/text()) gt 0">
-        <button onclick="location='{/TEI/text/front/descendant::*[@xml:id='cs_nextUrl']/text()}'">Next (<xsl:value-of select="$nextLabel"/> of <xsl:value-of select="/TEI/text/front/descendant::*[@xml:id='cs_totalInstances']/text()"/>)</button>
-      </xsl:if>
-      </p>
+      <form onsubmit="return false();">
+        <xsl:if test="string-length(/TEI/text/front/descendant::*[@xml:id='cs_nextUrl']/text()) gt 0 or string-length(/TEI/text/front/descendant::*[@xml:id='cs_prevUrl']/text()) gt 0">
+
+          <p class="paginator">
+            <select onchange="changePage(this)">
+              <xsl:call-template name="hcmc:makeOptions">
+                <xsl:with-param name="pageNum" select="1"/>
+                <xsl:with-param name="startItemNum" select="1"/>
+                <xsl:with-param name="pageBy" select="$maxItems"/>
+                <xsl:with-param name="totalInstances" select="$totalInstances"/>
+                <xsl:with-param name="currStartItemNum" select="$from"/>
+              </xsl:call-template>
+            </select>
+          </p>
+        
+        </xsl:if>
+        <p class="nextPrevButtons">
+          <xsl:if test="string-length(/TEI/text/front/descendant::*[@xml:id='cs_prevUrl']/text()) gt 0">
+            <button onclick="location='{/TEI/text/front/descendant::*[@xml:id='cs_prevUrl']/text()}'">Previous (<xsl:value-of select="$prevLabel"/>)</button>
+          </xsl:if>
+          <xsl:if test="string-length(/TEI/text/front/descendant::*[@xml:id='cs_nextUrl']/text()) gt 0">
+            <button onclick="location='{/TEI/text/front/descendant::*[@xml:id='cs_nextUrl']/text()}'">Next (<xsl:value-of select="$nextLabel"/> of <xsl:value-of select="$totalInstances"/>)</button>
+          </xsl:if>
+        </p>
+      </form>
     </xsl:variable>
     <xsl:if test="child::*">
       <div class="results">
@@ -388,6 +437,34 @@
       <xsl:apply-templates/>
       <xsl:copy-of select="$navButtons"/>
       </div>
+    </xsl:if>
+  </xsl:template>
+  
+  <xsl:template name="hcmc:makeOptions" as="element()*">
+    <xsl:param name="pageNum" select="1"/>
+    <xsl:param name="startItemNum" select="1"/>
+    <xsl:param name="pageBy" select="10"/>
+    <xsl:param name="totalInstances" select="1"/>
+    <xsl:param name="currStartItemNum" select="1"/>
+    <xsl:if test="$startItemNum le $totalInstances">
+      <option value="{$startItemNum}">
+        <xsl:if test="$startItemNum = $currStartItemNum">
+          <xsl:attribute name="selected">selected</xsl:attribute>
+        </xsl:if>
+        <xsl:text>Page </xsl:text><xsl:value-of select="$pageNum"/>
+        <xsl:text> (</xsl:text>
+        <xsl:value-of select="$startItemNum"/>
+        <xsl:text>-</xsl:text>
+        <xsl:value-of select="min((($startItemNum + $pageBy - 1), $totalInstances))"/>
+        <xsl:text>)</xsl:text>
+      </option>
+      <xsl:call-template name="hcmc:makeOptions">
+        <xsl:with-param name="pageNum" select="$pageNum + 1"/>
+        <xsl:with-param name="startItemNum" select="$startItemNum + $pageBy"/>
+        <xsl:with-param name="pageBy" select="$pageBy"/>
+        <xsl:with-param name="totalInstances" select="$totalInstances"/>
+        <xsl:with-param name="currStartItemNum" select="$currStartItemNum"/>
+      </xsl:call-template>
     </xsl:if>
   </xsl:template>
   
