@@ -298,7 +298,9 @@ declare function local:renderCodeSamples($egs as node()*) as element()*{
 
 (: This function wraps an element in the <egXML> parent 
    and calls a function to change its namespace to the 
-   TEI Examples namespace. 
+   TEI Examples namespace. Thanks to Michael Joyce for 
+   a patch here which allows for TEI elements that don't
+   have @xml:ids.
    
    @param $el the element to be wrapped in <egXML>, and whose namespace is to be changed.
    @return an <egXML> element in the Examples namespace and containing a copy of 
@@ -306,9 +308,15 @@ declare function local:renderCodeSamples($egs as node()*) as element()*{
                  
    :)
 declare function local:toEgXML($el as element()) as element()*{
-  <egXML xmlns="http://www.tei-c.org/ns/Examples" source="{root($el)/*[1]/@xml:id}.xml">
-  {local:toExampleNamespace($el)}
-  </egXML>
+    let $source :=
+            if(root($el)/*[1]/@xml:id) then 
+                root($el)/*[1]/@xml:id
+            else
+                util:document-name(root($el))
+  return 
+      <egXML xmlns="http://www.tei-c.org/ns/Examples" source="{$source}">
+      {local:toExampleNamespace($el)}
+      </egXML>
 };
 
 (: This function is called recursively to change the namespace of elements
