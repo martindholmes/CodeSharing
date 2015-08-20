@@ -168,6 +168,27 @@
               float: left;
            }
            
+           p.nextPrevButtons a{
+            display: inline-block;
+            cursor: pointer;
+            background-color: #d0d0d0;
+            border: 2pt outset gray;
+            margin: auto 0.25em;
+            color: black;
+            padding: 0.2em;
+            text-decoration: none;
+            font-weight: normal;
+            font-size: 90%;
+           }
+           
+           p.nextPrevButtons a:visited{
+            color: black;
+           }
+           
+           p.nextPrevButtons a:active{
+            border-style: inset;
+           }
+           
            input[type=text], select{
              min-width: 18em;
            }
@@ -422,10 +443,10 @@
         </xsl:if>
         <p class="nextPrevButtons">
           <xsl:if test="string-length(/TEI/text/front/descendant::*[@xml:id='cs_prevUrl']/text()) gt 0">
-            <button onclick="location='{/TEI/text/front/descendant::*[@xml:id='cs_prevUrl']/text()}'">Previous (<xsl:value-of select="$prevLabel"/>)</button>
+            <a href="{/TEI/text/front/descendant::*[@xml:id='cs_prevUrl']/text()}">Previous (<xsl:value-of select="$prevLabel"/>)</a>
           </xsl:if>
           <xsl:if test="string-length(/TEI/text/front/descendant::*[@xml:id='cs_nextUrl']/text()) gt 0">
-            <button onclick="location='{/TEI/text/front/descendant::*[@xml:id='cs_nextUrl']/text()}'">Next (<xsl:value-of select="$nextLabel"/> of <xsl:value-of select="$totalInstances"/>)</button>
+            <a href="{/TEI/text/front/descendant::*[@xml:id='cs_nextUrl']/text()}">Next (<xsl:value-of select="$nextLabel"/> of <xsl:value-of select="$totalInstances"/>)</a>
           </xsl:if>
         </p>
       </form>
