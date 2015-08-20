@@ -24,8 +24,8 @@ echo "" >> tmp/README.txt
 cat code/instructions.txt >> tmp/README.txt
 zip -rj tmp/codesharing.zip code/*
 zip -rj tmp/codesharing.zip tmp/README.txt
-cp tmp/codesharing.zip codesharing.zip
+cp tmp/codesharing.zip codesharing_rev_${REVISION}.zip
 rm -rf tmp
 echo ""
-echo "*** Created codesharing.zip file ***"
+echo "*** Created codesharing_rev_$REVISION.zip file ***"
 echo ""
