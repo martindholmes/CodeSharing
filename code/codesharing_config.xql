@@ -23,23 +23,24 @@ $Id$
 module namespace cs="http://hcmc.uvic.ca/namespaces/exist/codesharing";
 declare default element namespace "http://www.tei-c.org/ns/1.0";
 declare namespace exist = "http://exist.sourceforge.net/NS/exist"; 
+import module namespace request="http://exist-db.org/xquery/request";
 
 (: This should be set to application/tei+xml, but that makes Firefox open a fresh tab, which is annoying. :)
 declare option exist:serialize "method=xml media-type=application/xml encoding=utf-8 indent=yes";
 
 (: ---------------------------------------------------------------------------------------------------------------:)
-(: USER SETTINGS YOU SHOULD EDIT TO SUIT YOUR PROJECT.                               :)
+(: USER SETTINGS YOU SHOULD EDIT TO SUIT YOUR PROJECT. NOTE THAT THESE CAN ALSO BE PASSED AS PARAMETERS.          :)
 (: ---------------------------------------------------------------------------------------------------------------:)
-(: Set this variable to point to the collection where you keep your TEI data. :)
-declare variable $cs:rootCol := '/db/data/';
+(: Set or pass this variable to point to the collection where you keep your TEI data. :)
+declare variable $cs:rootCol := request:get-parameter('rootCol', '/db/data/');
 
-(: Set this variable to the absolute maximum number of items you want to return in 
+(: Set or pass this variable to the absolute maximum number of items you want to return in 
   one operation, to avoid bringing your web application to its knees. :)
-declare variable $cs:absoluteMaxItemsPerPage := 100;
+declare variable $cs:absoluteMaxItemsPerPage := xs:integer(request:get-parameter('absoluteMaxItemsPerPage', '100'));
 
-(: Set this variable to a number which makes sense as a default value for paging
+(: Set or pass this variable as a number which makes sense as a default value for paging
    of results. :)
-declare variable $cs:defaultMaxItemsPerPage := 10;
+declare variable $cs:defaultMaxItemsPerPage := xs:integer(request:get-parameter('defaultMaxItemsPerPage', '10'));
 
 (: This is a list of elements that should only be returned in smaller sets because 
   they're typically very large. Modify at will, depending on your documents and 
@@ -49,8 +50,8 @@ declare variable $cs:hugeElements    := ('teiHeader', 'text', 'front', 'back', '
 declare variable $cs:largeElements   := ('div', 'facsimile', 'listPerson', 'listBibl');
 declare variable $cs:mediumElements   := ('p', 'ab');
 
-(: Set this variable to a string which identifies your project. :)
-declare variable $cs:projectName := 'The Map of Early Modern London';
+(: Set or pass this variable to a string which identifies your project. :)
+declare variable $cs:projectName := request:get-parameter('projectName', 'My Project');
 
 (: If you want to provide access to the protocol description document,
    set this variable appropriately. :)
