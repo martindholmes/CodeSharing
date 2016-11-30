@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<meta xmlns="http://exist-db.org/xquery/repo">
+  <description>TEI CodeSharing application.</description>
+  <author>Martin Holmes</author>
+  <website>https://github.com/martindholmes/CodeSharing</website>
+  <status>alpha</status>
+  <license>Creative Commons Attribution-ShareAlike 4.0 International License</license>
+  <copyright>true</copyright>
+  <type>application</type>
+  <target>codesharing</target>
+  <prepare></prepare>
+  <finish/>
+  <permissions user="admin" password="" group="dba" mode="rw-rw-r--"/>
+  <note>
+    This is a resource package providing a query service which can 
+    be used by any other project which has a web view with a 
+    controller.xql file. See the documentation on how to make 
+    use of the service.
+  </note>
+  <deployed/>
+</meta>
