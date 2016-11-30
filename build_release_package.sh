@@ -25,9 +25,18 @@ cat code/instructions.txt >> tmp/README.txt
 zip -rj tmp/codesharing.zip code/*
 zip -rj tmp/codesharing.zip tmp/README.txt
 cp tmp/codesharing.zip codesharing_rev_${HASH}.zip
-rm -rf tmp
+
 echo ""
 echo "*** Created codesharing_rev_$HASH.zip file ***"
 echo ""
 CURRVER=`xmllint --xpath "string(//*[local-name() = 'package']/@version)" exist/expath-pkg.xml`
-echo "Current version is $CURRVER; what version number would you like to use?"
+echo "Current version is $CURRVER; what version number would you like to use? (Must be three digits.)"
+read NEWVER
+sed_param='s/version="'${CURRVER}'"/version="'${NEWVER}'"/'
+echo "Replacing ${CURRVER} with ${NEWVER}."
+sed -i "$sed_param" exist/expath-pkg.xml
+
+zip -rj tmp/codesharing.zip exist/*
+cp tmp/codesharing.zip "codesharing-${NEWVER}.xar"
+
+rm -rf tmp
