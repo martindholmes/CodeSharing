@@ -29,3 +29,5 @@ rm -rf tmp
 echo ""
 echo "*** Created codesharing_rev_$HASH.zip file ***"
 echo ""
+CURRVER=`xmllint --xpath "string(//*[local-name() = 'package']/@version)" exist/expath-pkg.xml`
+echo "Current version is $CURRVER; what version number would you like to use?"
