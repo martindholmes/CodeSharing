@@ -13,8 +13,10 @@ Requirements: eXist 3.0 or above.
 
 1. Install the XAR file from the release on GitHub,
    or build it yourself using build_release_package.sh
-   and install it yourself. This will install the service
-   into eXist itself.
+   and install it yourself. This will install the 
+   CodeSharing service into eXist. Any application in 
+   eXist which has a controller.xql file can be configured
+   to provide a CodeSharing interface.
 
 2. Add appropriate stanzas in your the controller.xql 
    file of your eXist application. Customize the 

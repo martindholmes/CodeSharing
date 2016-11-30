@@ -4,7 +4,7 @@
   <author>Martin Holmes</author>
   <website>https://github.com/martindholmes/CodeSharing</website>
   <status>alpha</status>
-  <license>Creative Commons Attribution-ShareAlike 4.0 International License</license>
+  <license>Dual-licensed under CC-by and BSD2</license>
   <copyright>true</copyright>
   <type>library</type>
   <target>codesharing</target>

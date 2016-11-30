@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <package xmlns="http://expath.org/ns/pkg" name="http://exist-db.org/apps/codesharing" 
-  abbrev="codesharing" version="0.0.4" spec="1.0">
+  abbrev="codesharing" version="1.0.1" spec="1.0">
   <title>TEI CodeSharing service</title>
 <!--  No known dependencies at present. -->
 </package>
