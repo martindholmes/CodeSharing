@@ -9,18 +9,18 @@ codesharing_protocol.xhtml file in your web browser.
 
 To use the XQuery implementation in eXist:
 
-Requirements: eXist 2.1 or above.
+Requirements: eXist 3.0 or above.
 
-1. Edit codesharing_config.xql to customize it for 
-   your own repository. Details are in comments in 
-   the file.
+1. Install the XAR file from the release on GitHub,
+   or build it yourself using build_release_package.sh
+   and install it yourself. This will install the service
+   into eXist itself.
 
-2. Upload codesharing_config.xql, codesharing.xql and 
-   codesharing.xsl into an empty collection in your 
-   eXist database. Make the .xql files executable.
+2. Add appropriate stanzas in your the controller.xql 
+   file of your eXist application. Customize the 
+   example below.
    
-3. Add appropriate stanzas in your controller.xql 
-   file. For example, with the following stanzas, a 
+   For example, with the following stanzas, a 
    request to "codesharing.htm" will result in the 
    human-friendly web form interface; a request to 
    "codesharing.xhtml" will be answered with the 
@@ -30,28 +30,36 @@ Requirements: eXist 2.1 or above.
    The following assumes that the codesharing.* files
    are stored in a collection called "codesharing" 
    which is a child of the collection containing 
-   controller.xql.
+   controller.xql. Make sure you place these stanzas
+   before any other stanzas that might handle generic
+   requests for *.html" or similar.
    
-   (: TEI CodeSharing API functions. We handle HTML first.  :)
-else if (text:matches-regex($exist:path, '/codesharing\.htm')) then
+       (: TEI CodeSharing API functions. We handle HTML first.  :)
+else if (matches($exist:path, '/codesharing\.html')) then
     <dispatch xmlns="http://exist.sourceforge.net/NS/exist">
-    	<forward url="{$exist:controller}/codesharing/codesharing.xql">
+    	<forward url="/codesharing/codesharing.xql">
     	  <add-parameter name="outputType" value="html"/>
+    	  (: This parameter contains the path to the TEI files you wish 
+    	     to make queriable with the CodeSharing service. :)
+    	  <add-parameter name="rootCol" value="/db/apps/graves/data/xml/original"/>
     	</forward>
     </dispatch>
     
     (: Now we can provide a special case for the HTML protocol description file. :)
-    else if (text:matches-regex($exist:path, '/codesharing_protocol\.xhtml')) then
+    else if (matches($exist:path, '/codesharing_protocol\.xhtml')) then
     <dispatch xmlns="http://exist.sourceforge.net/NS/exist">
-    	<forward url="{$exist:controller}/codesharing/codesharing_protocol.xhtml">
+    	<forward url="/codesharing/codesharing_protocol.xhtml">
     	</forward>
     </dispatch>
     
 (: Now we handle all other cases, to which we respond with XML. This means that e.g. 
   '/codesharing.xml', '/codesharing.xql' or even '/codesharing' will work. :)
-else if (text:matches-regex($exist:path, '/codesharing')) then
+else if (matches($exist:path, '/codesharing')) then
     <dispatch xmlns="http://exist.sourceforge.net/NS/exist">
-    	<forward url="{$exist:controller}/codesharing/codesharing.xql">
+    	<forward url="/codesharing/codesharing.xql">
+    	  (: This parameter contains the path to the TEI files you wish 
+    	     to make queriable with the CodeSharing service. :)
+    	<add-parameter name="rootCol" value="/db/apps/graves/data/xml/original"/>
     	</forward>
     </dispatch>
     
