@@ -566,7 +566,7 @@
       <xsl:apply-templates/>
     <xsl:if test="@source">
       <div class="sourceDocLink">
-      <a href="{@source}"><xsl:value-of select="@source"/></a>
+      <a href="{@source}"><xsl:value-of select="tokenize(@source, '/')[last()]"/></a>
       </div>
     </xsl:if>
     </div>

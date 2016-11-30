@@ -309,12 +309,13 @@ declare function local:renderCodeSamples($egs as node()*) as element()*{
    :)
 declare function local:toEgXML($el as element()) as element()*{
     let $source :=
-            if(root($el)/*[1]/@xml:id) then 
+            (:if(root($el)/*[1]/@xml:id) then 
                 root($el)/*[1]/@xml:id
             else
-                util:document-name(root($el))
+                util:document-name(root($el)):)
+            document-uri(root($el))
   return 
-      <egXML xmlns="http://www.tei-c.org/ns/Examples" source="{$source}">
+      <egXML xmlns="http://www.tei-c.org/ns/Examples" source="/exist/rest{$source}">
       {local:toExampleNamespace($el)}
       </egXML>
 };
