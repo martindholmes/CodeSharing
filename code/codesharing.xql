@@ -18,7 +18,7 @@ $Id$
     This library depends on the accompanying module codesharing_config.xql, which contains
     some variables that need to be set on a project basis.
     
-    This library is written for the eXist XML database version 2.0. To run it with another 
+    This library is written for the eXist XML database version 3.0. To run it with another 
     XQuery processor, changes would obviously have to be made to the code.
 :)
 
