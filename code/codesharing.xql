@@ -46,68 +46,68 @@ declare option exist:serialize "method=xml media-type=application/xml encoding=u
 (: ------------------------------------------------------------------------------:)
 
 (: Are we producing XML or HTML? :)
-declare variable $inputOutputType := request:get-parameter('outputType', 'xml');
-declare variable $outputType := if (matches($inputOutputType, '^((xml)|(html))$')) then $inputOutputType else 'xml';
+declare variable $local:inputOutputType := request:get-parameter('outputType', 'xml');
+declare variable $local:outputType := if (matches($local:inputOutputType, '^((xml)|(html))$')) then $local:inputOutputType else 'xml';
 
 (: The URL we came in on, without the query string. :)
 (: Note: we make this a relative URL, otherwise various 
   problems can occur when the form re-submits to itself. :)
-declare variable $url := tokenize(request:get-uri(), '/')[position() = last()];
+declare variable $local:url := tokenize(request:get-uri(), '/')[position() = last()];
 
 (: We need to sanitize inputs as well as we can. We can do this 
    by regexes and attempted casts to XML Schema datatypes. :)
 
 (: The from variable holds the number to start from when paging through results. :)
-declare variable $from := xs:integer(request:get-parameter('from', '1'));
+declare variable $local:from := xs:integer(request:get-parameter('from', '1'));
 
 (: If the verb parameter is missing, we default to 'identify', which should supply enough info 
   for a user to figure out what they should be asking for. :)
-declare variable $verb := request:get-parameter('verb', 'identify');
+declare variable $local:verb := request:get-parameter('verb', 'identify');
 
 (: The user may be interested only in specific namespaces. We default to TEI, naturally. :)
-declare variable $inputNamespace := if ($verb != 'listNamespaces') then request:get-parameter('namespace', 'http://www.tei-c.org/ns/1.0') else '';
-declare variable $namespace := if ($inputNamespace castable as xs:anyURI and matches($inputNamespace, '^[a-zA-Z]+://')) then $inputNamespace else '';
-declare variable $namespaceDeclaration := if ($namespace = '') then '' else concat("declare namespace temp='", $namespace, "'; ");
+declare variable $local:inputNamespace := if ($local:verb != 'listNamespaces') then request:get-parameter('namespace', 'http://www.tei-c.org/ns/1.0') else '';
+declare variable $local:namespace := if ($local:inputNamespace castable as xs:anyURI and matches($local:inputNamespace, '^[a-zA-Z]+://')) then $local:inputNamespace else '';
+declare variable $local:namespaceDeclaration := if ($local:namespace = '') then '' else concat("declare namespace temp='", $local:namespace, "'; ");
 (: If the verb is getExamples, then we need to know the element and/or attribute name and value. :)
-declare variable $inputElementName := if ($verb = 'getExamples') then request:get-parameter('elementName', '') else '';
-declare variable $elementName := if ($inputElementName castable as xs:NCName) then $inputElementName else '';
-declare variable $inputAttributeName := if ($verb = 'getExamples') then request:get-parameter('attributeName', '') else '';
-declare variable $attributeName := if ($inputAttributeName castable as xs:NCName) then $inputAttributeName else '';
+declare variable $local:inputElementName := if ($local:verb = 'getExamples') then request:get-parameter('elementName', '') else '';
+declare variable $local:elementName := if ($local:inputElementName castable as xs:NCName) then $local:inputElementName else '';
+declare variable $local:inputAttributeName := if ($local:verb = 'getExamples') then request:get-parameter('attributeName', '') else '';
+declare variable $local:attributeName := if ($local:inputAttributeName castable as xs:NCName) then $local:inputAttributeName else '';
 (: This is a bit harder to sanitize; we'll assume, though, that 
    in order to break out of the string value, a quote or entity 
    will need to be injected, so we will escape them all. :)
-declare variable $attributeValue := if ($verb = 'getExamples') then local:sanitizeString(request:get-parameter('attributeValue', '')) else '';
+declare variable $local:attributeValue := if ($local:verb = 'getExamples') then local:sanitizeString(request:get-parameter('attributeValue', '')) else '';
 
 (:The wrapped setting determines whether the hits will be returned in the context of their parent element. :)
-declare variable $wrapped := if (request:get-parameter('wrapped', 'false') = 'true') then true() else false();
+declare variable $local:wrapped := if (request:get-parameter('wrapped', 'false') = 'true') then true() else false();
 
 (: The user's preferred number of returns, which is overridden by the above absolute limit.
    We also impose absolute limits on specific elements that can be excessively large. :)
-declare variable $userMaxItemsPerPage := xs:integer(request:get-parameter('maxItemsPerPage', $cs:defaultMaxItemsPerPage));
-declare variable $maxItemsPerPage := cs:refineMaxItemsPerPage($userMaxItemsPerPage, $elementName, $wrapped);
+declare variable $local:userMaxItemsPerPage := xs:integer(request:get-parameter('maxItemsPerPage', $cs:defaultMaxItemsPerPage));
+declare variable $local:maxItemsPerPage := cs:refineMaxItemsPerPage($local:userMaxItemsPerPage, $local:elementName, $local:wrapped);
 
 (:The documentType filters the results according to a specific document type.:)
-declare variable $documentType := if ($verb = 'getExamples') then local:sanitizeString(normalize-space(request:get-parameter('documentType', ''))) else '';
+declare variable $local:documentType := if ($local:verb = 'getExamples') then local:sanitizeString(normalize-space(request:get-parameter('documentType', ''))) else '';
 
 (: We'll retrieve the examples irrespective of what the verb is, so that they are 
 accessible globally for counting and navigation through the list. :)
-declare variable $egs := local:getEgs();
-declare variable $totalInstances := count($egs);
+declare variable $local:egs := local:getEgs();
+declare variable $local:totalInstances := count($local:egs);
 
 (: Now we know how many examples there are, we can calculate the next item for paging. :)
-declare variable $next := if (($from + $maxItemsPerPage) le count($egs)) then $from + $maxItemsPerPage else 0;
+declare variable $local:next := if (($local:from + $local:maxItemsPerPage) le count($local:egs)) then $local:from + $local:maxItemsPerPage else 0;
 (: We can also calculate a previous page link. :)
-declare variable $prev := if (($from - $maxItemsPerPage) ge 1) then $from - $maxItemsPerPage else 0;
+declare variable $local:prev := if (($local:from - $local:maxItemsPerPage) ge 1) then $local:from - $local:maxItemsPerPage else 0;
 
 (: These variables are used to create paging links for working through example lists. :)
-declare variable $query := request:get-query-string();
-declare variable $currParams := if (matches($query, 'from=[\d]+')) then $query else concat($query, '&amp;from=1');
-declare variable $nextParams := if ($next gt 0) then replace($currParams, 'from=[\d]+', concat('from=', $next)) else "";
-declare variable $prevParams := if ($prev gt 0) then replace($currParams, 'from=[\d]+', concat('from=', $prev)) else ""; 
+declare variable $local:query := request:get-query-string();
+declare variable $local:currParams := if (matches($local:query, 'from=[\d]+')) then $local:query else concat($local:query, '&amp;from=1');
+declare variable $local:nextParams := if ($local:next gt 0) then replace($local:currParams, 'from=[\d]+', concat('from=', $local:next)) else "";
+declare variable $local:prevParams := if ($local:prev gt 0) then replace($local:currParams, 'from=[\d]+', concat('from=', $local:prev)) else ""; 
 
 (: Actual complete links for paging. :)
-declare variable $nextUrl := if (string-length($nextParams) gt 0) then concat($url, '?', $nextParams) else "";
-declare variable $prevUrl := if (string-length($prevParams) gt 0) then concat($url, '?', $prevParams) else "";
+declare variable $local:nextUrl := if (string-length($local:nextParams) gt 0) then concat($local:url, '?', $local:nextParams) else "";
+declare variable $local:prevUrl := if (string-length($local:prevParams) gt 0) then concat($local:url, '?', $local:prevParams) else "";
 
 (: ------------------------------------------------------------------------------:)
 (: FUNCTIONS THAT DO ALL THE ACTUAL WORK.                                        :)
@@ -119,16 +119,16 @@ declare variable $prevUrl := if (string-length($prevParams) gt 0) then concat($u
                   variables containing the external input parameters.
 :)
 declare function local:processVerb() as element()*{
-  switch ($verb)
+  switch ($local:verb)
 (: Listing the distinct values of element names in the target namespace. 
   Thanks to Jens Østergaard Petersen for a good suggestion for 
   optimizing this. :)
     case 'listElements' return
       try{
         let $q := 
-          if ($namespace = '') then concat("distinct-values(collection('", $cs:rootCol, "')//*[namespace-uri()='']/local-name())")
+          if ($local:namespace = '') then concat("distinct-values(collection('", $cs:rootCol, "')//*[namespace-uri()='']/local-name())")
           else concat("distinct-values(collection('", $cs:rootCol, "')//temp:*/local-name())"),
-        $gis := util:eval(concat($namespaceDeclaration, $q))
+        $gis := util:eval(concat($local:namespaceDeclaration, $q))
         return
         if (count($gis) gt 1) then
          <list>
@@ -150,9 +150,9 @@ declare function local:processVerb() as element()*{
    case 'listAttributes' return
     try{
       let $q := 
-        if ($namespace = '') then concat("distinct-values(collection('", $cs:rootCol, "')//*/@*[namespace-uri() = '']/name())")
+        if ($local:namespace = '') then concat("distinct-values(collection('", $cs:rootCol, "')//*/@*[namespace-uri() = '']/name())")
         else concat("distinct-values((collection('", $cs:rootCol, "')//*/@temp:*/name(), collection('", $cs:rootCol, "')//temp:*/@*[namespace-uri()='']/name()))"),
-      $atts := util:eval(concat($namespaceDeclaration, $q))
+      $atts := util:eval(concat($local:namespaceDeclaration, $q))
       return if (count($atts) gt 0) then
       (:if (collection($cs:rootCol)//node()/@*[namespace-uri() = $namespace] or collection($cs:rootCol)//node()[namespace-uri() = $namespace]/@*[namespace-uri() = ""]) then:)
         <list>
@@ -210,7 +210,7 @@ declare function local:processVerb() as element()*{
 (: If the verb is getExamples, then we process and render all the examples we already
   retrieved. :)
    case 'getExamples' return 
-    local:renderCodeSamples($egs)
+    local:renderCodeSamples($local:egs)
    default return ()
 };
 
@@ -220,50 +220,50 @@ declare function local:processVerb() as element()*{
                   based on the input parameters.
 :)
 declare function local:getEgs() as element()*{
-      if ($verb != 'getExamples') then () 
+      if ($local:verb != 'getExamples') then () 
       else
-        let $doctypePredicate := if ($documentType) then cs:getDocumentTypeFilterPredicate($documentType) else ""
+        let $doctypePredicate := if ($local:documentType) then cs:getDocumentTypeFilterPredicate($local:documentType) else ""
         return
       try {
-        if (string-length($elementName) gt 0 and string-length($attributeName) gt 0) then
+        if (string-length($local:elementName) gt 0 and string-length($local:attributeName) gt 0) then
   (: Attributes in the context of an element.   :)
-        if (string-length($attributeValue) gt 0) then
+        if (string-length($local:attributeValue) gt 0) then
   (: An attribute value is specified. :)
-          let $q := concat("collection('", $cs:rootCol, "')//tei:TEI", $doctypePredicate, "//*:", $elementName, "[namespace-uri() = '", $namespace, "'][@", $attributeName, "='", $attributeValue, "']")
+          let $q := concat("collection('", $cs:rootCol, "')//tei:TEI", $doctypePredicate, "//*:", $local:elementName, "[namespace-uri() = '", $local:namespace, "'][@", $local:attributeName, "='", $local:attributeValue, "']")
           return util:eval($q)
         else
   (: An attribute value is not specified. :)
-          let $q := concat("collection('", $cs:rootCol, "')//tei:TEI", $doctypePredicate, "//*:", $elementName, "[namespace-uri() = '", $namespace, "'][@", $attributeName, "]")
+          let $q := concat("collection('", $cs:rootCol, "')//tei:TEI", $doctypePredicate, "//*:", $local:elementName, "[namespace-uri() = '", $local:namespace, "'][@", $local:attributeName, "]")
           return util:eval($q)
         else
-          if  (string-length($elementName) gt 0) then
+          if  (string-length($local:elementName) gt 0) then
   (: Element is named but not attribute, although a value may still be supplied for attribute.       :)
-            if (string-length($attributeValue) gt 0) then
+            if (string-length($local:attributeValue) gt 0) then
   (: There's an attribute value but no name for it.        :)
-              let $q := concat("collection('", $cs:rootCol, "')//tei:TEI", $doctypePredicate, "//*:", $elementName, "[namespace-uri() = '", $namespace, "'][@*='", $attributeValue, "']")
+              let $q := concat("collection('", $cs:rootCol, "')//tei:TEI", $doctypePredicate, "//*:", $local:elementName, "[namespace-uri() = '", $local:namespace, "'][@*='", $local:attributeValue, "']")
               return util:eval($q)
             else
   (: There's just an element name. Easy one. :)
-              let $q := concat("collection('", $cs:rootCol, "')//tei:TEI", $doctypePredicate, "//*:", $elementName, "[namespace-uri() = '", $namespace, "']")
+              let $q := concat("collection('", $cs:rootCol, "')//tei:TEI", $doctypePredicate, "//*:", $local:elementName, "[namespace-uri() = '", $local:namespace, "']")
               return util:eval($q)
           else 
-            if (string-length($attributeName) gt 0) then
+            if (string-length($local:attributeName) gt 0) then
   (: Attributes irrespective of their parent element. :)
   (: In this case, we have to retrieve in no namespace as well as in the specified
      namespace. This is designed to produce intuitive results 
      as well as results which are strictly speaking correct. :)
-              if (string-length($attributeValue) gt 0) then
+              if (string-length($local:attributeValue) gt 0) then
   (: An attribute value is specified. :)
-                let $q := concat("collection('", $cs:rootCol, "')//tei:TEI", $doctypePredicate, "//*[@*:", $attributeName, "[.='", $attributeValue, "' and (namespace-uri() = '' or namespace-uri() = '", $namespace, "')]]")
+                let $q := concat("collection('", $cs:rootCol, "')//tei:TEI", $doctypePredicate, "//*[@*:", $local:attributeName, "[.='", $local:attributeValue, "' and (namespace-uri() = '' or namespace-uri() = '", $local:namespace, "')]]")
                 return util:eval($q)
               else
   (: An attribute value is not specified. :)
-              let $q := concat("collection('", $cs:rootCol, "')//tei:TEI", $doctypePredicate, "//*[@*:", $attributeName, "[namespace-uri() = '' or namespace-uri() = '", $namespace, "']]")
+              let $q := concat("collection('", $cs:rootCol, "')//tei:TEI", $doctypePredicate, "//*[@*:", $local:attributeName, "[namespace-uri() = '' or namespace-uri() = '", $local:namespace, "']]")
                 return util:eval($q)
             else
-              if (string-length($attributeValue) gt 0) then 
+              if (string-length($local:attributeValue) gt 0) then 
   (: An attribute value and nothing else has been specified. :)
-                  let $q := concat("collection('", $cs:rootCol, "')//tei:TEI", $doctypePredicate, "//*[@*[.='", $attributeValue, "' and (namespace-uri() = '' or namespace-uri() = '", $namespace, "')]]")
+                  let $q := concat("collection('", $cs:rootCol, "')//tei:TEI", $doctypePredicate, "//*[@*[.='", $local:attributeValue, "' and (namespace-uri() = '' or namespace-uri() = '", $local:namespace, "')]]")
                 return util:eval($q)
               else
               ()
@@ -279,14 +279,14 @@ declare function local:getEgs() as element()*{
 
 :)
 declare function local:renderCodeSamples($egs as node()*) as element()*{
-  let $lastItem := min((count($egs), $from + $maxItemsPerPage - 1))
+  let $lastItem := min((count($egs), $local:from + $local:maxItemsPerPage - 1))
   return
     if (count($egs) gt 0) then
       <div>
        {
-      for $i in $from to $lastItem
+      for $i in $local:from to $lastItem
         return
-          if ($wrapped = true()) then
+          if ($local:wrapped = true()) then
             local:toEgXML($egs[$i]/parent::*)
           else
             local:toEgXML($egs[$i])
@@ -400,25 +400,25 @@ let $doc :=
         <p>Input values and calculated variables:
           <list>
             <label>project</label> <item xml:id="cs_project">{$cs:projectName}</item>
-            <label>verb</label> <item xml:id="cs_verb">{$verb}</item>
-            <label>namespace</label> <item xml:id="cs_namespace">{$namespace}</item>
-            <label>elementName</label> <item xml:id="cs_elementName">{$elementName}</item>
-            <label>attributeName</label> <item xml:id="cs_attributeName">{$attributeName}</item>
-            <label>attributeValue</label> <item xml:id="cs_attributeValue">{$attributeValue}</item>
-            <label>documentType</label> <item xml:id="cs_documentType">{$documentType}</item>
-            <label>wrapped</label> <item xml:id="cs_wrapped">{$wrapped}</item>
+            <label>verb</label> <item xml:id="cs_verb">{$local:verb}</item>
+            <label>namespace</label> <item xml:id="cs_namespace">{$local:namespace}</item>
+            <label>elementName</label> <item xml:id="cs_elementName">{$local:elementName}</item>
+            <label>attributeName</label> <item xml:id="cs_attributeName">{$local:attributeName}</item>
+            <label>attributeValue</label> <item xml:id="cs_attributeValue">{$local:attributeValue}</item>
+            <label>documentType</label> <item xml:id="cs_documentType">{$local:documentType}</item>
+            <label>wrapped</label> <item xml:id="cs_wrapped">{$local:wrapped}</item>
             <label>defaultMaxItemsPerPage</label> <item xml:id="cs_defaultMaxItemsPerPage">{$cs:defaultMaxItemsPerPage}</item>
             <label>absoluteMaxItemsPerPage</label> <item xml:id="cs_absoluteMaxItemsPerPage">{$cs:absoluteMaxItemsPerPage}</item>
-            <label>maxItemsPerPage</label> <item xml:id="cs_maxItemsPerPage">{$maxItemsPerPage}</item>
-            <label>totalInstances</label> <item xml:id="cs_totalInstances">{$totalInstances}</item>
-            <label>from</label> <item xml:id="cs_from">{$from}</item>
-            <label>next</label> <item xml:id="cs_next">{$next}</item>
-            <label>currParams</label> <item xml:id="cs_currParams">{$currParams}</item>
-            <label>nextParams</label> <item xml:id="cs_nextParams">{$nextParams}</item>
-            <label>prevParams</label> <item xml:id="cs_prevParams">{$prevParams}</item>
-            <label>url</label> <item xml:id="cs_url">{$url}</item>
-            <label>nextUrl</label> <item xml:id="cs_nextUrl">{$nextUrl}</item>
-            <label>prevUrl</label> <item xml:id="cs_prevUrl">{$prevUrl}</item>
+            <label>maxItemsPerPage</label> <item xml:id="cs_maxItemsPerPage">{$local:maxItemsPerPage}</item>
+            <label>totalInstances</label> <item xml:id="cs_totalInstances">{$local:totalInstances}</item>
+            <label>from</label> <item xml:id="cs_from">{$local:from}</item>
+            <label>next</label> <item xml:id="cs_next">{$local:next}</item>
+            <label>currParams</label> <item xml:id="cs_currParams">{$local:currParams}</item>
+            <label>nextParams</label> <item xml:id="cs_nextParams">{$local:nextParams}</item>
+            <label>prevParams</label> <item xml:id="cs_prevParams">{$local:prevParams}</item>
+            <label>url</label> <item xml:id="cs_url">{$local:url}</item>
+            <label>nextUrl</label> <item xml:id="cs_nextUrl">{$local:nextUrl}</item>
+            <label>prevUrl</label> <item xml:id="cs_prevUrl">{$local:prevUrl}</item>
           </list>
         </p>
       </div>
@@ -445,7 +445,7 @@ let $doc :=
     </text>
 </TEI>
     
-return if ($outputType = 'xml') then 
+return if ($local:outputType = 'xml') then 
   $doc
 else 
   let $opt := util:declare-option('exist:serialize', 'method=html5 media-type=text/html') 
