@@ -46,8 +46,7 @@ declare option exist:serialize "method=xml media-type=application/xml encoding=u
 (: ------------------------------------------------------------------------------:)
 
 (: Are we producing XML or HTML? :)
-declare variable $inputOutputType := request:get-parameter('outputType', 'xml');
-declare variable $outputType := if (matches($inputOutputType, '^((xml)|(html))$')) then $inputOutputType else 'xml';
+declare variable $outputType := local:getParameter('outputType', ('xml', 'html'));
 
 (: The URL we came in on, without the query string. :)
 (: Note: we make this a relative URL, otherwise various 
@@ -62,40 +61,54 @@ declare variable $from := xs:integer(request:get-parameter('from', '1'));
 
 (: If the verb parameter is missing, we default to 'identify', which should supply enough info 
   for a user to figure out what they should be asking for. :)
-declare variable $verb := request:get-parameter('verb', 'identify');
+declare variable $verb := local:getParameter('verb', ('identify', 'listElements', 'listAttributes', 
+                                                      'listDocumentTypes', 'listNamespaces', 
+                                                      'getExamples'));
 
 (: The user may be interested only in specific namespaces. We default to TEI, naturally. :)
 declare variable $inputNamespace := if ($verb != 'listNamespaces') then request:get-parameter('namespace', 'http://www.tei-c.org/ns/1.0') else '';
+
 declare variable $namespace := if ($inputNamespace castable as xs:anyURI and matches($inputNamespace, '^[a-zA-Z]+://')) then $inputNamespace else '';
+
 declare variable $namespaceDeclaration := if ($namespace = '') then '' else concat("declare namespace temp='", $namespace, "'; ");
+
 (: If the verb is getExamples, then we need to know the element and/or attribute name and value. :)
 declare variable $inputElementName := if ($verb = 'getExamples') then request:get-parameter('elementName', '') else '';
+
 declare variable $elementName := if ($inputElementName castable as xs:NCName) then $inputElementName else '';
+
 declare variable $inputAttributeName := if ($verb = 'getExamples') then request:get-parameter('attributeName', '') else '';
+
 declare variable $attributeName := if ($inputAttributeName castable as xs:NCName) then $inputAttributeName else '';
+
 (: This is a bit harder to sanitize; we'll assume, though, that 
    in order to break out of the string value, a quote or entity 
    will need to be injected, so we will escape them all. :)
-declare variable $attributeValue := if ($verb = 'getExamples') then local:sanitizeString(request:get-parameter('attributeValue', '')) else '';
+declare variable $attributeValue := if ($verb = 'getExamples') then 
+                                       local:sanitizeString(request:get-parameter('attributeValue', '')) else '';
 
 (:The wrapped setting determines whether the hits will be returned in the context of their parent element. :)
-declare variable $wrapped := if (request:get-parameter('wrapped', 'false') = 'true') then true() else false();
+declare variable $wrapped := if (local:getParameter('wrapped', ('false', 'true')) = 'true') then true() else false();
 
 (: The user's preferred number of returns, which is overridden by the above absolute limit.
    We also impose absolute limits on specific elements that can be excessively large. :)
 declare variable $userMaxItemsPerPage := xs:integer(request:get-parameter('maxItemsPerPage', $cs:defaultMaxItemsPerPage));
+
 declare variable $maxItemsPerPage := cs:refineMaxItemsPerPage($userMaxItemsPerPage, $elementName, $wrapped);
 
 (:The documentType filters the results according to a specific document type.:)
-declare variable $documentType := if ($verb = 'getExamples') then local:sanitizeString(normalize-space(request:get-parameter('documentType', ''))) else '';
+declare variable $documentType := if ($verb = 'getExamples') then   
+                                     local:sanitizeString(normalize-space(request:get-parameter('documentType', ''))) else '';
 
 (: We'll retrieve the examples irrespective of what the verb is, so that they are 
 accessible globally for counting and navigation through the list. :)
 declare variable $egs := local:getEgs();
+
 declare variable $totalInstances := count($egs);
 
 (: Now we know how many examples there are, we can calculate the next item for paging. :)
 declare variable $next := if (($from + $maxItemsPerPage) le count($egs)) then $from + $maxItemsPerPage else 0;
+
 (: We can also calculate a previous page link. :)
 declare variable $prev := if (($from - $maxItemsPerPage) ge 1) then $from - $maxItemsPerPage else 0;
 
@@ -347,6 +360,25 @@ declare function local:toExampleNamespace($el as element()) as element()*{
 declare function local:sanitizeString($text as xs:string) as xs:string {
   let $s := replace(replace($text, '&amp;', '&amp;amp;'), '''', '&amp;apos;')
   return replace($s, '"', '&amp;quot;')
+};
+
+(: This function is designed to be a safer approach to reading paramters 
+   which constrains the return value to be one of a sequence of supplied 
+   strings. This avoids errors arising from an external application 
+   inadvertently supplying an unexpected parameter value. 
+   
+   @param $paramName the name of the request parameter to be retrieved 
+          as xs:string.
+   @param $allowedValues a sequence of strings, of which the first is 
+          the default value; any retrieved value that does not appear 
+          in this list will be replaced by the first value.
+   :)
+declare function local:getParameter($paramName as xs:string, 
+                                    $allowedVals as xs:string+) as xs:string{
+  let $got := request:get-parameter($paramName, $allowedVals[1])
+  return
+    if ($got = $allowedVals) then $got
+    else $allowedVals[1]
 };
 
 
